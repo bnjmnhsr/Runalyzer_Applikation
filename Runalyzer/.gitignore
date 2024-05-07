@@ -27,3 +27,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+## Other Things ##
+output_video.mp4
+rect_folder
+contour_folder
+background_test
+out_test
