@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="opencv4">
+    <CLASSES>
+      <root url="file:///usr/local/Cellar/opencv/4.9.0_8/share/java/opencv4" />
+    </CLASSES>
+    <JAVADOC />
+    <NATIVE>
+      <root url="file:///usr/local/Cellar/opencv/4.9.0_8/share/java/opencv4" />
+    </NATIVE>
+    <SOURCES>
+      <root url="file:///usr/local/Cellar/opencv/4.9.0_8/share/java/opencv4" />
+    </SOURCES>
+    <jarDirectory url="file:///usr/local/Cellar/opencv/4.9.0_8/share/java/opencv4" recursive="false" />
+    <jarDirectory url="file:///usr/local/Cellar/opencv/4.9.0_8/share/java/opencv4" recursive="false" type="SOURCES" />
+  </library>
+</component>
