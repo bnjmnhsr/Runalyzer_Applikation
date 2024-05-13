@@ -40,7 +40,9 @@ public class VideoFrameProcessor {
         VideoWriter videoWriter = new VideoWriter("output_video.mp4", fourcc, 30, size);
 
         for (Mat frame : frames) {
-            videoWriter.write(frame);
+            if(frame != null){
+                videoWriter.write(frame);
+            }
         }
         videoWriter.release();
     }
