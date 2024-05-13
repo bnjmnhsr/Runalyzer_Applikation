@@ -5,11 +5,12 @@ import java.util.List;
 
 public class VideoSequence {
     private String videoFilePath;
+    private int relativeCreationTime;
     private List<SingleFrame> singleFrames = new ArrayList<>();
 
-    //Construction that initiates the object VideoSequence with the videofilepath
-    public VideoSequence(String videoFilePath){
+    public VideoSequence(String videoFilePath, int relativeCreationTime){
         this.videoFilePath = videoFilePath;
+        this.relativeCreationTime = relativeCreationTime;
     }
 
     public List<SingleFrame> getSingleFrames(){
@@ -18,12 +19,8 @@ public class VideoSequence {
 
     public void separateToFrames(){
         VideoFrameProcessor videoFrames = new VideoFrameProcessor();
-        videoFrames.videoToFrames(this.videoFilePath);
-        List<Mat> frameList = videoFrames.getFrameList();
-
-        for(Mat frame : frameList){
-            singleFrames.add(new SingleFrame(frame));
-        }
+        videoFrames.videoToFrames(videoFilePath, relativeCreationTime);
+        singleFrames = videoFrames.getFrameList();
     }
 
     public void detectRunnerInformation(){
