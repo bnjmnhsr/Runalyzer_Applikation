@@ -47,7 +47,7 @@ public class VideoSequence {
         int maxRunnerHeight = 0;
         for(SingleFrame frame : singleFrames){
             if(frame.getRunnerHeight() > maxRunnerHeight){
-                maxRunnerHeight = frame.getRunnerWidth();
+                maxRunnerHeight = frame.getRunnerHeight();
             }
         }
         return maxRunnerHeight;

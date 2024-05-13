@@ -1,160 +1,120 @@
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+//in this call, the runner Object is detected based on contour analysis with the bounding rectangle around it,
+//the area around the runner should be made black to reduce the noise in the image
 public class ObjectDetection {
+    private Rect objectRect = null;
+
+    //TODO for debugging, create rect_i to store the index of the bounding rectangle, it should be not change if a new object is created
     private static int rect_i = 0;
-    private int width;
-    private int height;
 
-    private MatOfPoint finalContour = null;
-    private Rect rect;
-    public void detectObject(Mat dst) {
-        Rect rectCrop = null;
-        Mat cannyOutput = new Mat();
-        Imgproc.Canny(dst, cannyOutput, 100, 100 * 2);
+    public Mat removeNoise(Mat dst) {
+        //detect runner object, based on contour analysis, the contour of the runner should be the biggest one
+        //create a bounding rectangle around the runner object
+        //try to remove noise in the image by making the area around the runner black
 
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Imgproc.findContours(cannyOutput, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        //System.out.println("Amount of Contours detected: " + contours.size());
-        MatOfPoint temp_contour; //the largest is at the index 0 for starting point
+        //copy dst to a new matrix to avoid changing the original image
+        Mat processedImg = dst.clone();
 
-        // Code to detect all contours
-        Mat contourImage = dst.clone();
-        double maxArea = -1;
+        // Add morphological operations to fill holes, remove noise, and dilate the mask
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6, 6));
+        Imgproc.erode(dst, processedImg, kernel); // Apply erosion to remove small white noise
+        Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_OPEN, kernel); // Apply opening to remove noise
 
-        for (int i = 0; i < contours.size(); i++) {
-            Rect boundingRect = Imgproc.boundingRect(contours.get(i));
-            // Calculate the area of the contour
-            //double area = Imgproc.contourArea(contours.get(i));
-            double boundingRectArea = boundingRect.width * boundingRect.height;
+        Mat fill_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
+        Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_CLOSE, fill_kernel); // Apply closing to fill small holes in the foreground
 
-            //System.out.println("I: "+ i + " Area: "+area);
-            //System.out.println("I: " + i + " Bounding Rectangle Area: " + boundingRectArea);
+        Mat fill02_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(15, 15));
+        Imgproc.dilate(processedImg, processedImg, fill02_kernel); // Apply dilation to make the object more visible
 
-            //Imgproc.drawContours(contourImage, Collections.singletonList(contours.get(i)), -1, new Scalar(0, 255, 0), 2);
+        Mat cannyOutput = new Mat(); //create a matrix to store the canny output
+        Imgproc.Canny(processedImg, cannyOutput, 100, 100 * 2);
 
-            //Imgcodecs.imwrite("./contour_folder/" + i + "_contour_image_largest.jpg", contourImage);
+        List<MatOfPoint> contours = new ArrayList<>(); //create a list to store the contours
+        Mat hierarchy = new Mat(); //create a matrix to store the hierarchy
+        Imgproc.findContours(cannyOutput, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE); //find the contours in the image
 
-            // Check if the current contour has a larger area than the previous largest contour
+        double maxArea = -1; //initialize the maximum area to -1
+
+        // detect the biggest contour based on the area of the bounding rectangle around it
+        for (MatOfPoint contour : contours) {
+            Rect boundingRect = Imgproc.boundingRect(contour); //create a bounding rectangle around the contour
+            double boundingRectArea = boundingRect.width * boundingRect.height; //calculate the area of the bounding rectangle
+
+            //check if the current bounding rectangle has a larger area than the previous largest bounding rectangle
             if (boundingRectArea > maxArea) {
-                maxArea = boundingRectArea;
-                // Find the bounding rectangle of the contour
-                rect = Imgproc.boundingRect(contours.get(i));
-
-
-                //finalContour = contours.get(i);
-                //System.out.println("Area: "+Imgproc.contourArea(finalContour));
+                objectRect = boundingRect; //store the bounding rectangle
+                maxArea = boundingRectArea; //update the maximum area
             }
         }
 
-        if (rect != null) {
-            width = rect.width;
-            height = rect.height;
-            //System.out.println("Successful");
-
-            // Draw the rectangle on a copy of the original image
+        // TODO for debugging purposes, print the area of the bounding rectangle and store it
+        if (objectRect != null) {
+            //draw the bounding rectangle on a copy of the original image
             Mat output = new Mat();
-            dst.copyTo(output);
-            Imgproc.rectangle(output, rect.tl(), rect.br(), new Scalar(227, 61, 148), 2);
+            processedImg.copyTo(output);
+            Imgproc.rectangle(output, objectRect.tl(), objectRect.br(), new Scalar(227, 61, 148), 2);
 
-            // Save the image with the rectangle
-            String filename = "object_" + rect_i + ".jpg";
-            Imgcodecs.imwrite("./rect_folder/" + filename, output);
+            //save the image with the bounding rectangle
+            Imgcodecs.imwrite("./rect_folder/object_" + rect_i + ".jpg", output);
             rect_i++;
-
-        } else {
-            //System.out.println("Fail");
-            width = 0;
-            height = 0;
         }
 
-            /*
-            for (int idx = 0; idx < contours.size(); idx++) {
-                temp_contour = contours.get(idx);
-                MatOfPoint2f new_mat = new MatOfPoint2f(temp_contour.toArray());
-                int contourSize = (int) temp_contour.total();
-                MatOfPoint2f approxCurve_temp = new MatOfPoint2f();
-                Imgproc.approxPolyDP(new_mat, approxCurve_temp, contourSize * 0.05, true);
+        //remove noise in the image by making the area around the runner black
+        if (objectRect != null) {
+            // Get the center of the current bounding rectangle
+            Point center = new Point(objectRect.x + objectRect.width / 2.0, objectRect.y + objectRect.height / 2.0);
 
-                if (approxCurve_temp.total() == 8) {
-                    MatOfPoint points = new MatOfPoint(approxCurve_temp.toArray());
-                    rect = Imgproc.boundingRect(points);
-                    //Imgproc.rectangle(img2, new Point(rect.x,rect.y), new Point(rect.x+rect.width,rect.y+rect.height), new Scalar(227, 61, 148), 2);
-                    //rectCrop = new Rect(rect.x-30, 0, rect.width+60, img2.height());
-                }
-            }
-            */
+            // Define the new width and height
+            int width = (int) (objectRect.width * 3.2); // Change this to your desired width
+            int height = (int) (objectRect.height * 2.8); // Change this to your desired height
 
+            // Calculate the new top-left corner position
+            int newX = (int) (center.x - width / 2.0);
+            int newY = (int) (center.y - height / 2.5);
 
-//
-//        for (int i = 0; i < contours.size(); i++) {
-//            Imgproc.drawContours(contourImage, contours, i, new Scalar(0, 255, 0), 2);
-//        }
-//
-//        Imgcodecs.imwrite("./contour_folder/contour_image.jpg", contourImage);
+            // Create the new bounding rectangle
+            Rect newObjectRect = new Rect(newX, newY, width, height);
 
 
+            //create a mask to make the area around the runner black
+            Mat mask = new Mat(dst.size(), CvType.CV_8UC1, new Scalar(0));
+            Imgproc.rectangle(mask, newObjectRect.tl(), newObjectRect.br(), new Scalar(255), -1); //fill the bounding rectangle with white
 
+            //apply the mask to the image
+            Core.bitwise_and(dst, mask, dst);
 
+            //TODO for debugging purposes, print the area of the bounding rectangle#
+            //Draw the new bounding rectangle on a copy of the original image for debugging
+            Mat output_2 = new Mat();
+            dst.copyTo(output_2);
+            Imgproc.rectangle(output_2, newObjectRect.tl(), newObjectRect.br(), new Scalar(227, 61, 148), 2);
 
+            // Save the image with the new bounding rectangle
+            Imgcodecs.imwrite("./rect_folder/new_object_" + rect_i + ".jpg", output_2);
+//            Moments moments = Imgproc.moments(dst);
+//            System.out.println("m00: " + moments.get_m00());
+        }
 
-
-        //Imgproc.drawContours(contourImage, Collections.singletonList(finalContour), -1, new Scalar(0, 255, 0), 2);
-        //Imgcodecs.imwrite("./contour_folder/contour_image_largest.jpg", contourImage);
-
-
-
-
-            /*
-            // Initialize variables to store the index of the largest contour and its bounding rectangle
-            int largestContourIndex = -1;
-            double largestContourArea = 0;
-
-            // Iterate through all contours
-            for (int idx = 0; idx < contours.size(); idx++) {
-                // Get the area of the current contour
-                double contourArea = Imgproc.contourArea(contours.get(idx));
-
-                // Check if the contour is larger than the previous largest contour
-                if (contourArea > largestContourArea) {
-                    largestContourArea = contourArea;
-                    largestContourIndex = idx;
-                }
-            }
-
-            // Check if a valid largest contour was found
-            if (largestContourIndex != -1) {
-                // Get the bounding rectangle of the largest contour
-                MatOfPoint largestContour = contours.get(largestContourIndex);
-                rect = Imgproc.boundingRect(largestContour);
-
-                // Draw the rectangle on a copy of the original image
-                Mat output = new Mat();
-                dst.copyTo(output);
-                Imgproc.rectangle(output, rect.tl(), rect.br(), new Scalar(227, 61, 148), 2);
-
-                // Save the image with the rectangle
-                String filename = "object_" + rect_i + ".jpg";
-                Imgcodecs.imwrite("./rect_folder/" + filename, output);
-                rect_i++;
-
-                // Update width and height after the loop
-                width = rect.width;
-                height = rect.height;
-            }
-             */
+        return dst;
     }
 
     public int getObjectWidth(){
-        return 400;
+        if (objectRect != null) {
+            return objectRect.width * 3;
+        }
+        return 0;
     }
 
     public int getObjectHeight(){
-        return 700;
+        if (objectRect != null) {
+            return objectRect.height * 3;
+        }
+        return 0;
     }
 }
