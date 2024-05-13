@@ -1,8 +1,4 @@
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoWriter;
@@ -10,26 +6,30 @@ import org.opencv.videoio.VideoWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VideoFrameProcessor {
-    private List<Mat> frameList = new ArrayList<>();
+import static org.opencv.videoio.Videoio.*;
 
-    public List<Mat> getFrameList(){
+public class VideoFrameProcessor {
+    private List<SingleFrame> frameList = new ArrayList<>();
+
+    public List<SingleFrame> getFrameList(){
         return frameList;
     }
 
-    public void videoToFrames(String videoFilePath) {
+    public void videoToFrames(String videoFilePath, int relativeCreationTime) {
         VideoCapture videoCapture = new VideoCapture(videoFilePath);
 
         Mat frame = new Mat();
+        double timecode = relativeCreationTime;
+        double millisBetweenFrames = (1000.0/videoCapture.get(CAP_PROP_FPS));
 
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
             Mat currentFrame = new Mat();
-            frame.copyTo(currentFrame);
-
-            frameList.add(currentFrame);
+            frame.copyTo(currentFrame); //TODO: maybe remove
+            frameList.add(new SingleFrame(currentFrame, timecode));
+            timecode += millisBetweenFrames;
         }
-        System.out.println("Size of the Video in Frames: " + frameList.size()); //only for debugging
+        System.out.println("Size of the Video in Frames: " + frameList.size()); //TODO: only for debugging, remove
 
         videoCapture.release();
     }
