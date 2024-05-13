@@ -1,4 +1,6 @@
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +15,19 @@ public class VideoCompilator {
     }
 
     public void selectFinalFrames(List<VideoSequence> videoSequences){
+        double relativeRunnerPosition;
+        double switchingTimecode = 0;
         for(VideoSequence vs : videoSequences){
             for(SingleFrame fr : vs.getSingleFrames()){
-                if(fr.getCroppedFrame() != null){
-                    //TODO: implement transition from video 'n' to video 'n+1'
-                    finalFrames.add(fr.getCroppedFrame());
+                if(fr.hasRunner() && fr.getTimecode() >= switchingTimecode){
+                    relativeRunnerPosition = (double) fr.getRunnerPosition().getX() / fr.getFrame().width();
+                    if(vs != videoSequences.getLast() && relativeRunnerPosition >= 0.875){
+                        switchingTimecode = fr.getTimecode();
+                        break;
+                    }
+                    else{
+                        finalFrames.add(fr.getCroppedFrame());
+                    }
                 }
             }
         }
