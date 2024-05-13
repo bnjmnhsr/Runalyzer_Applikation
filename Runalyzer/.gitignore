@@ -29,7 +29,7 @@ bin/
 .DS_Store
 
 ## Other Things ##
-output_video.mp4
+##output_video.mp4
 rect_folder
 contour_folder
 background_test
