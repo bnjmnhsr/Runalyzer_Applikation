@@ -26,10 +26,10 @@ public class ObjectDetection {
         Imgproc.erode(dst, processedImg, kernel); // Apply erosion to remove small white noise
         Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_OPEN, kernel); // Apply opening to remove noise
 
-        Mat fill_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
+        Mat fill_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
         Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_CLOSE, fill_kernel); // Apply closing to fill small holes in the foreground
 
-        Mat fill02_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(15, 15));
+        Mat fill02_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(23, 23));
         Imgproc.dilate(processedImg, processedImg, fill02_kernel); // Apply dilation to make the object more visible
 
         Mat cannyOutput = new Mat(); //create a matrix to store the canny output
