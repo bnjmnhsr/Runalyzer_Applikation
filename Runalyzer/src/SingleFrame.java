@@ -10,7 +10,7 @@ public class SingleFrame {
     private Vector runnerPosition;
     private int runnerWidth;
     private int runnerHeight;
-    private int timecode;
+    private double timecode;
 
     public SingleFrame(){
         frame = new Mat();
@@ -21,13 +21,13 @@ public class SingleFrame {
         timecode = 0;
     }
 
-    public SingleFrame(Mat frame){
+    public SingleFrame(Mat frame, double timecode){
         this.frame = frame;
         hasRunner = false;
         runnerPosition = new Vector();
         runnerWidth = 0;
         runnerHeight = 0;
-        timecode = 0;
+        this.timecode = timecode;
     }
 
     public Mat getFrame(){
@@ -40,6 +40,14 @@ public class SingleFrame {
 
     public boolean hasRunner(){
         return hasRunner;
+    }
+
+    public Vector getRunnerPosition(){
+        return runnerPosition;
+    }
+
+    public double getTimecode(){
+        return timecode;
     }
 
     public void detectRunnerInformation(Mat backgroundFrame){
