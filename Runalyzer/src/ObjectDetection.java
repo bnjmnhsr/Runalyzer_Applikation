@@ -1,21 +1,19 @@
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 //in this call, the runner Object is detected based on contour analysis with the bounding rectangle around it,
 //the area around the runner should be made black to reduce the noise in the image
 public class ObjectDetection {
-    public Rect objectRect = null;
+    private Rect objectRect = null;
 
     //TODO for debugging, create rect_i to store the index of the bounding rectangle, it should be not change if a new object is created
     private static int rect_i = 0;
 
-    public Mat detectObject(Mat dst) {
+    public Mat removeNoise(Mat dst) {
         //detect runner object, based on contour analysis, the contour of the runner should be the biggest one
         //create a bounding rectangle around the runner object
         //try to remove noise in the image by making the area around the runner black
@@ -40,9 +38,6 @@ public class ObjectDetection {
         List<MatOfPoint> contours = new ArrayList<>(); //create a list to store the contours
         Mat hierarchy = new Mat(); //create a matrix to store the hierarchy
         Imgproc.findContours(cannyOutput, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE); //find the contours in the image
-
-        //TODO for debugging purposes, print the amount of contours detected
-        //System.out.println("Amount of Contours detected: " + contours.size());
 
         double maxArea = -1; //initialize the maximum area to -1
 
@@ -110,7 +105,6 @@ public class ObjectDetection {
     }
 
     public int getObjectWidth(){
-        //if the objectRect is not null, return the width of the bounding rectangle
         if (objectRect != null) {
             return objectRect.width * 3;
         }
@@ -118,7 +112,6 @@ public class ObjectDetection {
     }
 
     public int getObjectHeight(){
-        //if the objectRect is not null, return the height of the bounding rectangle
         if (objectRect != null) {
             return objectRect.height * 3;
         }

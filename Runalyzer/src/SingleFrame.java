@@ -48,7 +48,7 @@ public class SingleFrame {
 
         //filter the image to remove noise
         ObjectDetection objDetector = new ObjectDetection();
-        differenceImg = objDetector.detectObject(differenceImg);
+        differenceImg = objDetector.removeNoise(differenceImg);
 
         Moments moments = Imgproc.moments(differenceImg);
         //get_m00 counts number of white pixels in the image, if enough pixels counted there exists a runner...
@@ -59,7 +59,7 @@ public class SingleFrame {
             runnerPosition.setY((int) (moments.get_m01() / moments.get_m00()));
             runnerWidth = objDetector.getObjectWidth();
             runnerHeight = objDetector.getObjectHeight();
-        } 
+        }
         else{
             hasRunner = false;
         }
