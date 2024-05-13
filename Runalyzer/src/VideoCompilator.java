@@ -26,7 +26,9 @@ public class VideoCompilator {
                         break;
                     }
                     else{
-                        finalFrames.add(fr.getCroppedFrame());
+                        if(fr.getCroppedFrame() != null){
+                            finalFrames.add(fr.getCroppedFrame());
+                        }
                     }
                 }
             }
