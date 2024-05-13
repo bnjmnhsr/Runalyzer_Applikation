@@ -8,9 +8,12 @@ public class Runalyzer {
         File[] inputVideoFiles = new File("./input_videos/").listFiles();
         List<VideoSequence> videoSequences = new ArrayList<>();
 
+        //TODO: get millisCreationTime in another way
+        int[] millisCreationTime = {0, 4087};   //vid01, vid02
+
         //Extract information for each video sequence
         for(int i = 0; i < inputVideoFiles.length; i++){
-            videoSequences.add(new VideoSequence(inputVideoFiles[i].getPath()));
+            videoSequences.add(new VideoSequence(inputVideoFiles[i].getPath(), millisCreationTime[i]));
             videoSequences.get(i).separateToFrames();
             videoSequences.get(i).detectRunnerInformation();
         }
