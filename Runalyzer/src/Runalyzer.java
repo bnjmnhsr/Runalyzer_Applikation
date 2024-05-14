@@ -3,24 +3,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Runalyzer {
+    private File[] inputVideoFiles;
+    private List<VideoSequence> videoSequences;
+    private int[] millisCreationTime;
+    private int maxRunnerWidth;
+    private int maxRunnerHeight;
+    private int croppingWidth;
+    private int croppingHeight;
+
     public Runalyzer(){
-        //Load files into a File list called inputVideoFiles
-        File[] inputVideoFiles = new File("./input_videos/").listFiles();
-        List<VideoSequence> videoSequences = new ArrayList<>();
+        this.maxRunnerWidth = 0;
+        this.maxRunnerHeight = 0;
+    }
 
+    public void loadVideoFiles(String filePath){
+        inputVideoFiles = new File(filePath).listFiles();
         //TODO: get millisCreationTime in another way
-        int[] millisCreationTime = {0, 4087};   //vid01, vid02
+        millisCreationTime[0] = 0;      //vid01
+        millisCreationTime[1] = 4087;   //vid02
+    }
 
-        //Extract information for each video sequence
+    public void detectRunnerInformation(){
+        videoSequences = new ArrayList<>();
         for(int i = 0; i < inputVideoFiles.length; i++){
             videoSequences.add(new VideoSequence(inputVideoFiles[i].getPath(), millisCreationTime[i]));
             videoSequences.get(i).separateToFrames();
             videoSequences.get(i).detectRunnerInformation();
         }
+    }
 
-        //Detect max Runner-Width/-Height
-        int maxRunnerWidth = 0;
-        int maxRunnerHeight = 0;
+    public void detectMaxRunnerWidthHeight(){
         for(VideoSequence vidSequence : videoSequences){
             if(vidSequence.getMaxRunnerWidth() > maxRunnerWidth){
                 maxRunnerWidth = vidSequence.getMaxRunnerWidth();
@@ -29,15 +41,17 @@ public class Runalyzer {
                 maxRunnerHeight = vidSequence.getMaxRunnerHeight();
             }
         }
+    }
 
-        //Crop Single-Frames
-        int croppingWidth = maxRunnerWidth + 10;
-        int croppingHeight = maxRunnerHeight + 10;
+    public void cropSingleFrames(){
+        croppingWidth = maxRunnerWidth + 10;
+        croppingHeight = maxRunnerHeight + 10;
         for(VideoSequence vidSequence : videoSequences){
             vidSequence.cropFrames(croppingWidth, croppingHeight);
         }
+    }
 
-        //Synthesize cropped Single-Frames to final Video-Compilation
+    public void createFinalVideo(){
         VideoCompilator videoCompilator = new VideoCompilator(croppingWidth, croppingHeight);
         videoCompilator.selectFinalFrames(videoSequences);
         videoCompilator.createFinalVideo();
