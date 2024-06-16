@@ -32,13 +32,13 @@ public class VideoCompilator {
                     else{
                         if(fr.getCroppedFrame() != null){
                             finalFrames.add(fr.getCroppedFrame());
-                            Log.d("Runalyzer", "Cropped Frame added to finalFrames");
+                            Log.d("Benni", "Cropped Frame added to finalFrames");
                         }
                     }
                 }
                 //TODO: added if we just want to create a video without cropping or selection
                 //finalFrames.add(fr.getFrame());
-                //Log.d("Runalyzer", "Frame added to finalFrames");
+                //Log.d("Benni", "Frame added to finalFrames");
             }
         }
     }

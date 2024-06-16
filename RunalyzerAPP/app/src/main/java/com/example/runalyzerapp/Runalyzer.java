@@ -59,7 +59,7 @@ public class Runalyzer {
     }
 
     public void detectMaxRunnerWidthHeight(){
-        Log.d("Runalyzer", "Detecting Max Runner Width and Height");
+        Log.d("Benni", "Detecting Max Runner Width and Height");
         for(VideoSequence vidSequence : videoSequences){
             if(vidSequence.getMaxRunnerWidth() > maxRunnerWidth){
                 maxRunnerWidth = vidSequence.getMaxRunnerWidth();
@@ -68,12 +68,12 @@ public class Runalyzer {
                 maxRunnerHeight = vidSequence.getMaxRunnerHeight();
             }
         }
-        Log.d("Runalyzer", "MaxRunnerWidth: " + maxRunnerWidth );
-        Log.d("Runalyzer", "MaxRunnerHeight: " + maxRunnerHeight );
+        Log.d("Benni", "MaxRunnerWidth: " + maxRunnerWidth );
+        Log.d("Benni", "MaxRunnerHeight: " + maxRunnerHeight );
     }
 
     public void cropSingleFrames(){
-        Log.d("Runalyzer", "Cropping Single Frames");
+        Log.d("Benni", "Cropping Single Frames");
         croppingWidth = maxRunnerWidth + 10;
         croppingHeight = maxRunnerHeight + 10;
         //added this code because i wanted to test the creation of videos from frames
@@ -85,7 +85,7 @@ public class Runalyzer {
     }
 
     public void createFinalVideo(){
-        Log.d("Runalyzer", "Creating Final Video");
+        Log.d("Benni", "Creating Final Video");
         VideoCompilator videoCompilator = new VideoCompilator(croppingWidth, croppingHeight);
         videoCompilator.selectFinalFrames(videoSequences);
         videoCompilator.createFinalVideo();

@@ -50,9 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
         //Check if Opencv is loaded correctly, copied from OpenCV documentation
         if (OpenCVLoader.initLocal()) {
-            Log.d("Runalyzer", "OpenCV loaded successfully");
+            Log.d("Benni", "OpenCV loaded successfully");
         } else {
-            Log.d("Runalyzer", "OpenCV initialization failed!");
+            Log.d("Benni", "OpenCV initialization failed!");
             (Toast.makeText(this, "OpenCV initialization failed!", Toast.LENGTH_LONG)).show();
             return;
         }
