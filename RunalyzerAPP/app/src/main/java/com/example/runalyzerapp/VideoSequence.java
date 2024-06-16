@@ -1,17 +1,21 @@
 package com.example.runalyzerapp;
 
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
 import org.opencv.core.Mat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class VideoSequence {
-    private String videoFilePath;
+    private Uri videoUri;
     private int relativeCreationTime;
     private List<SingleFrame> singleFrames = new ArrayList<>();
 
-    public VideoSequence(String videoFilePath, int relativeCreationTime){
-        this.videoFilePath = videoFilePath;
+    public VideoSequence(Uri videoUri, int relativeCreationTime) {
+        this.videoUri = videoUri;
         this.relativeCreationTime = relativeCreationTime;
     }
 
@@ -19,17 +23,22 @@ public class VideoSequence {
         return singleFrames;
     }
 
-    public void separateToFrames(){
+    public void separateToFrames(Context context){
         VideoFrameProcessor videoFrames = new VideoFrameProcessor();
-        videoFrames.videoToFrames(videoFilePath, relativeCreationTime);
+        //videoFrames.videoToFrames(context, videoUri, relativeCreationTime);
+
+        videoFrames.extractAllFrames(context, videoUri, relativeCreationTime);
+
         singleFrames = videoFrames.getFrameList();
     }
 
     public void detectRunnerInformation(){
+        Log.d("Benni", "Detecting Runner Information");
         Mat backgroundFrame = singleFrames.get(0).getFrame();
         for(SingleFrame frame : singleFrames){
             frame.detectRunnerInformation(backgroundFrame);
         }
+        Log.d("Benni", "Runner Information detected");
     }
 
     public int getMaxRunnerWidth(){

@@ -1,5 +1,7 @@
 package com.example.runalyzerapp;
 
+import android.util.Log;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
@@ -53,6 +55,7 @@ public class SingleFrame {
     }
 
     public void detectRunnerInformation(Mat backgroundFrame){
+        Log.d("Runalyzer", "Detecting Runner Information (SingleFrame)" + timecode);
         BackgroundSubtraction backgroundSubtractor = new BackgroundSubtraction();
         Mat differenceImg = backgroundSubtractor.subtract(backgroundFrame, frame);
 

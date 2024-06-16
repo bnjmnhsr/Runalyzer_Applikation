@@ -1,5 +1,7 @@
 package com.example.runalyzerapp;
 
+import android.util.Log;
+
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
@@ -30,9 +32,13 @@ public class VideoCompilator {
                     else{
                         if(fr.getCroppedFrame() != null){
                             finalFrames.add(fr.getCroppedFrame());
+                            Log.d("Runalyzer", "Cropped Frame added to finalFrames");
                         }
                     }
                 }
+                //TODO: added if we just want to create a video without cropping or selection
+                //finalFrames.add(fr.getFrame());
+                //Log.d("Runalyzer", "Frame added to finalFrames");
             }
         }
     }

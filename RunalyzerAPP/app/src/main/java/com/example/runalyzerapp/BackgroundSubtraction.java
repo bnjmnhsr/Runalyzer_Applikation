@@ -51,8 +51,8 @@ public class BackgroundSubtraction {
 
 
         //Use to check Substracted images
-        Imgcodecs.imwrite("./background_test/out"+resultimg_i+".jpg", resultImg);
-        resultimg_i++;
+        //Imgcodecs.imwrite("./storage/emulated/0/Pictures/out"+resultimg_i+".jpg", resultImg);
+        //resultimg_i++;
 
 
         return resultImg;
