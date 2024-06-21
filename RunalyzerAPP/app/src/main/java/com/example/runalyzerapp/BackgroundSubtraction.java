@@ -54,6 +54,10 @@ public class BackgroundSubtraction {
         //Imgcodecs.imwrite("./storage/emulated/0/Pictures/out"+resultimg_i+".jpg", resultImg);
         //resultimg_i++;
 
+        backgroundGray.release();
+        imgGray.release();
+        backgroundGrayBlurred.release();
+        imgGrayBlurred.release();
 
         return resultImg;
     }

@@ -52,7 +52,7 @@ public class Runalyzer {
         videoSequences = new ArrayList<>();
         for (int i = 0; i < inputVideoUris.size(); i++) {
             Uri videoUri = inputVideoUris.get(i);
-            videoSequences.add(new VideoSequence(videoUri, millisCreationTime[i]));
+            videoSequences.add(new VideoSequence(context, videoUri, millisCreationTime[i]));
             videoSequences.get(i).separateToFrames(context);
             videoSequences.get(i).detectRunnerInformation();
         }

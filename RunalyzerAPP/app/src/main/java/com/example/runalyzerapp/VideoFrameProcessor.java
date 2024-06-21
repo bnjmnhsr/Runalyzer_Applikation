@@ -11,11 +11,13 @@ import org.opencv.videoio.VideoWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.opencv.videoio.Videoio.*;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -32,39 +34,36 @@ public class VideoFrameProcessor {
         return frameList;
     }
 
-    public void videoToFrames(String videoFilePath, int relativeCreationTime) {
-        VideoCapture videoCapture = new VideoCapture(videoFilePath);
+    public void videoToFrames(Context context, String videoFilePath, int relativeCreationTime) {
+        VideoCapture videoCapture = null;
+        try {
+            videoCapture = new VideoCapture(videoFilePath);
+        } catch (Exception e) {
+            Log.e("Benni", Log.getStackTraceString(e));
+            return;
+        }
 
         if (!videoCapture.isOpened()) {
-            Log.d("Runalyzer", "Failed to open video file: " + videoFilePath);
+            Log.d("Benni", "Failed to open video file: " + videoFilePath);
             return;
         }
 
         Mat frame = new Mat();
         double timecode = relativeCreationTime;
         double millisBetweenFrames = (1000.0/videoCapture.get(CAP_PROP_FPS));
-        int frameCount = 0;
 
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
             Mat currentFrame = new Mat();
-            //convert frame to RGB, because colors were switched somehow...
-            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2RGB);
 
             frame.copyTo(currentFrame); //TODO: maybe remove
+            double imgRatio = (double)currentFrame.height()/(double)currentFrame.width();
+            Imgproc.resize(currentFrame, currentFrame, new Size(500,500*imgRatio));
             frameList.add(new SingleFrame(currentFrame, timecode));
             timecode += millisBetweenFrames;
-            frameCount++;
-            Log.d("Runalyzer", "Frame count: " + frameCount + ", Timecode: " + timecode);
-            //store frame image in storage
-            //Imgcodecs.imwrite("/storage/emulated/0/Pictures/" + "frame" + frameCount + ".jpg", currentFrame);
-
-            //I added this because the program crashed
-            //if (frameCount == 30) {
-            //    break;
-            //}
         }
 
+        frame.release();
         videoCapture.release();
     }
 
@@ -98,8 +97,7 @@ public class VideoFrameProcessor {
             double timecode = relativeCreationTime;
 
             for (double t = 0; t < durationMillis; t += millisBetweenFrames) {
-                Bitmap bitmapFrame = retriever.getFrameAtTime((long)t,
-                        MediaMetadataRetriever.OPTION_CLOSEST);
+                Bitmap bitmapFrame = retriever.getFrameAtTime((long)t*1000, MediaMetadataRetriever.OPTION_CLOSEST);
                 if (bitmapFrame != null) {
                     Utils.bitmapToMat(bitmapFrame, frame);
                     //Add relativeCreationTime to the calculated timecode
@@ -140,18 +138,32 @@ public class VideoFrameProcessor {
         videoWriter.release();
     }
 
-    //that was an idea, if we can still work with real paths we can use this to find it...
-    public String getRealPathFromURI(Context context, Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
-        if (cursor == null) {
-            return contentUri.getPath();
-        } else {
-            cursor.moveToFirst();
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            String result = cursor.getString(column_index);
-            cursor.close();
-            return result;
+
+    //TODO: only for debugging, remove
+    public void saveBitmapToGallery(Context context, String filename, Bitmap bitmap) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+
+        Uri externalContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri imageUri = context.getContentResolver().insert(externalContentUri, values);
+
+        try {
+            if (imageUri != null) {
+                OutputStream outputStream = context.getContentResolver().openOutputStream(imageUri);
+                if (outputStream != null) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 20, outputStream);
+                    outputStream.close();
+                    Log.d("Benni", filename + " saved to gallery");
+                } else {
+                    Log.e("Benni", "OutputStream is null.");
+                }
+            } else {
+                Log.e("Benni", "ImageUri is null.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("Benni", Log.getStackTraceString(e));
         }
     }
 }

@@ -55,7 +55,6 @@ public class SingleFrame {
     }
 
     public void detectRunnerInformation(Mat backgroundFrame){
-        Log.d("Benni", "Detecting Runner Information (SingleFrame)" + timecode);
         BackgroundSubtraction backgroundSubtractor = new BackgroundSubtraction();
         Mat differenceImg = backgroundSubtractor.subtract(backgroundFrame, frame);
 
@@ -76,6 +75,8 @@ public class SingleFrame {
         else{
             hasRunner = false;
         }
+
+        differenceImg.release();
     }
 
     public int getRunnerWidth(){ return runnerWidth; }
