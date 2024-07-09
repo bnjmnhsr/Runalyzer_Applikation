@@ -53,11 +53,21 @@ public class Runalyzer {
     }
 
     public void cropSingleFrames(){
-        croppingWidth = maxRunnerWidth + 10;
-        croppingHeight = maxRunnerHeight + 10;
-        //added this code because i wanted to test the creation of videos from frames
-        //croppingWidth = 1920;
-        //croppingHeight = 1080;
+        Log.d("Benni", "Cropping Single Frames");
+        if (croppingWidth < 100) {
+            croppingWidth = 100;
+            croppingHeight = maxRunnerHeight + 10;
+        } else {
+            croppingWidth = maxRunnerWidth + 10;
+            croppingHeight = maxRunnerHeight + 10;
+        }
+
+        // Ensure the cropping dimensions are even
+        croppingWidth = croppingWidth % 2 == 0 ? croppingWidth : croppingWidth - 1;
+        croppingHeight = croppingHeight % 2 == 0 ? croppingHeight : croppingHeight - 1;
+
+        Log.d("Benni", "Max Cropping Width: " + croppingWidth + " Max Cropping Height: " + croppingHeight);
+
         for(VideoSequence vidSequence : videoSequences){
             vidSequence.cropFrames(croppingWidth, croppingHeight);
         }

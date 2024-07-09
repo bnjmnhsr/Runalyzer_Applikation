@@ -34,17 +34,17 @@ public class ObjectDetection {
             processedImg = dst.clone();
 
             // Add morphological operations to fill holes, remove noise, and dilate the mask
-            kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6, 6));
+            kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
             Imgproc.erode(dst, processedImg, kernel); // Apply erosion to remove small white noise
             Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_OPEN, kernel); // Apply opening to remove noise
 
-            fill_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
+            fill_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
             Imgproc.morphologyEx(processedImg, processedImg, Imgproc.MORPH_CLOSE, fill_kernel); // Apply closing to fill small holes in the foreground
 
-            fill02_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(23, 23));
+            fill02_kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(11, 11));
             Imgproc.dilate(processedImg, processedImg, fill02_kernel); // Apply dilation to make the object more visible
 
-            Imgproc.Canny(processedImg, cannyOutput, 100, 100 * 2);
+            Imgproc.Canny(processedImg, cannyOutput, 100, 150);
 
             //List<MatOfPoint> contours = new ArrayList<>(); //create a list to store the contours
             Imgproc.findContours(cannyOutput, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE); //find the contours in the image

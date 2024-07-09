@@ -19,6 +19,7 @@ public class VideoCompilator {
     }
 
     public void selectFinalFrames(List<VideoSequence> videoSequences){
+        Log.d("Benni", "Selecting Final Frames");
         double relativeRunnerPosition;
         double switchingTimecode = 0;
         for(VideoSequence vs : videoSequences){
@@ -46,7 +47,7 @@ public class VideoCompilator {
     public void createFinalVideo(){
         VideoFrameProcessor processorFinalVideo = new VideoFrameProcessor();
         if(!finalFrames.isEmpty()){
-            processorFinalVideo.framesToVideo(finalFrames, videoWidth, videoHeight);
+            processorFinalVideo.framesToVideo(finalFrames);
         }else{
             //TODO: error handling
         }

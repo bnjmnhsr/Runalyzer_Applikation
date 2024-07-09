@@ -1,16 +1,25 @@
 package com.example.runalyzerapp;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import android.Manifest;
 
 import android.widget.Toast;
 
@@ -61,25 +70,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /*
-
-        //TODO: Added button to start Testing
-        Button button = findViewById(R.id.button);
-
-        //Starting to run the Runalyzer as a new Thread, instead in the Program, not sure if correct
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Call your function here
-                        startRunalyzer();
-                    }
-                });
-            }
-        });
-
     }
 
     @Override
@@ -104,16 +94,6 @@ public class MainActivity extends AppCompatActivity {
         {
             Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    public void startRunalyzer() {
-        Runalyzer runalyzer = new Runalyzer();
-
-        runalyzer.loadVideoFiles(this);
-        runalyzer.detectRunnerInformation(this);
-//        runalyzer.detectMaxRunnerWidthHeight();
-//        runalyzer.cropSingleFrames();
-//        runalyzer.createFinalVideo();
     }
 
     private void takePermission() {
@@ -156,10 +136,5 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    */
-
-
     }
 }

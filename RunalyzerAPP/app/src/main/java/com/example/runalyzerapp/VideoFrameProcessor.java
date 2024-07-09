@@ -1,5 +1,9 @@
 package com.example.runalyzerapp;
 
+import org.jcodec.api.android.AndroidSequenceEncoder;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Rational;
 import org.opencv.android.Utils;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -9,6 +13,7 @@ import org.opencv.core.Mat;
 import org.opencv.videoio.VideoWriter;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -118,25 +123,35 @@ public class VideoFrameProcessor {
         }
     }
 
-    public void framesToVideo(List<Mat> frames, int videoWidth, int videoHeight) {
-        int fourcc = VideoWriter.fourcc('M', 'J', 'P', 'G');
-        Size size = new Size(videoWidth, videoHeight);
-        VideoWriter videoWriter = new VideoWriter(Environment.getExternalStorageDirectory().getPath() + "/output.avi", fourcc, 30, size);
-
-        if (videoWriter.isOpened()) {
-            Log.d("Benni", "VideoWriter opened successfully");
-        } else {
-            Log.d("Benni", "Failed to open VideoWriter");
-        }
-
-        for (Mat frame : frames) {
-            if(frame != null){
-                videoWriter.write(frame);
-                Log.d("Benni", "Frame written");
+    public void framesToVideo(List<Mat> frames) {
+        Log.d("Benni", "Starting Frames To Video Encoding");
+        FileChannelWrapper out = null;
+        try {
+            File moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+            String moviesdir = moviesDir.getAbsolutePath();
+            //output file with data and time stamp
+            out = NIOUtils.writableFileChannel(moviesdir + "/VideoCompilation_" + System.currentTimeMillis() + ".mp4");
+            AndroidSequenceEncoder encoder = new AndroidSequenceEncoder(out, Rational.R(30, 1));
+            for (Mat frame : frames) {
+                // Convert the Mat to a Bitmap
+                Bitmap image = Bitmap.createBitmap(frame.cols(), frame.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(frame, image);
+                // Encode the image
+                encoder.encodeImage(image);
             }
+            // Finalize the encoding, i.e. clear the buffers, write the header, etc.
+            encoder.finish();
+            Log.d("Benni", "Video written");
+        } catch (FileNotFoundException e) {
+            Log.d("Benni", "File not found");
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            Log.d("Benni", "IO Exception");
+            throw new RuntimeException(e);
+        } finally {
+            Log.d("Benni", "Closing File");
+            NIOUtils.closeQuietly(out);
         }
-        Log.d("Benni", "Video written");
-        videoWriter.release();
     }
 
 

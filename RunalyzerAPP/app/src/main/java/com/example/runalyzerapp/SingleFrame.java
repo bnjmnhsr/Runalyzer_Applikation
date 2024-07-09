@@ -65,7 +65,7 @@ public class SingleFrame {
         Moments moments = Imgproc.moments(differenceImg);
         //get_m00 counts number of white pixels in the image, if enough pixels counted there exists a runner...
         //TODO: check what's a correct value to identify a runner (depends also on camera-distance)
-        if(moments.get_m00() > 900000){
+        if(moments.get_m00() > 50000 && moments.get_m00() < 120000){
             hasRunner = true;
             runnerPosition.setX((int) (moments.get_m10() / moments.get_m00()));
             runnerPosition.setY((int) (moments.get_m01() / moments.get_m00()));
