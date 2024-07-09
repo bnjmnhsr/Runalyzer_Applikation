@@ -48,7 +48,7 @@ public class VideoCompilator {
         if(!finalFrames.isEmpty()){
             processorFinalVideo.framesToVideo(finalFrames, videoWidth, videoHeight);
         }else{
-            System.out.println("VideoCompilator: createFinalVideo: No finalFrames existing."); //TODO: change before release
+            //TODO: error handling
         }
     }
 }

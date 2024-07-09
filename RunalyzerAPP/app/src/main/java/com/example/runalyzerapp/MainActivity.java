@@ -1,38 +1,18 @@
 package com.example.runalyzerapp;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ContentUris;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import android.Manifest;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -40,8 +20,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        EdgeToEdge.enable(this); //using the entire width and height of the display by drawing behind the system bars
         setContentView(R.layout.activity_main);
+        //some layout settings for handling system bars etc:
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -56,6 +37,31 @@ public class MainActivity extends AppCompatActivity {
             (Toast.makeText(this, "OpenCV initialization failed!", Toast.LENGTH_LONG)).show();
             return;
         }
+
+        final Button button_recordVideo = (Button) findViewById(R.id.button_recordVideo);
+        final Button button_createCompilation = (Button) findViewById(R.id.button_createCompilation);
+
+        button_recordVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (v == button_recordVideo) {
+                    Intent intent = new Intent(MainActivity.this, Activity_RecordVideo.class);
+                    MainActivity.this.startActivity(intent);
+                }
+            }
+        });
+
+        button_createCompilation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (v == button_createCompilation) {
+                    Intent intent = new Intent(MainActivity.this, Activity_CreateCompilation.class);
+                    MainActivity.this.startActivity(intent);
+                }
+            }
+        });
+
+        /*
 
         //TODO: Added button to start Testing
         Button button = findViewById(R.id.button);
@@ -152,7 +158,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    */
 
 
-
+    }
 }

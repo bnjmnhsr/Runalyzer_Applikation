@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.renderscript.ScriptGroup;
 import android.util.Log;
@@ -118,23 +119,23 @@ public class VideoFrameProcessor {
     }
 
     public void framesToVideo(List<Mat> frames, int videoWidth, int videoHeight) {
-        int fourcc = VideoWriter.fourcc('H', '2', '6', '4');
+        int fourcc = VideoWriter.fourcc('M', 'J', 'P', 'G');
         Size size = new Size(videoWidth, videoHeight);
-        VideoWriter videoWriter = new VideoWriter("/sdcard/DCIM/Camera/video.mp4", fourcc, 30, size);
+        VideoWriter videoWriter = new VideoWriter(Environment.getExternalStorageDirectory().getPath() + "/output.avi", fourcc, 30, size);
 
         if (videoWriter.isOpened()) {
-            Log.d("Runalyzer", "VideoWriter opened successfully");
+            Log.d("Benni", "VideoWriter opened successfully");
         } else {
-            Log.d("Runalyzer", "Failed to open VideoWriter");
+            Log.d("Benni", "Failed to open VideoWriter");
         }
 
         for (Mat frame : frames) {
             if(frame != null){
                 videoWriter.write(frame);
-                Log.d("Runalyzer", "Frame written");
+                Log.d("Benni", "Frame written");
             }
         }
-        Log.d("Runalyzer", "Video written");
+        Log.d("Benni", "Video written");
         videoWriter.release();
     }
 
