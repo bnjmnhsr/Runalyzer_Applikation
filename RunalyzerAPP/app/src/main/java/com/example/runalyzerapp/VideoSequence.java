@@ -36,14 +36,10 @@ public class VideoSequence {
     }
 
     public void detectRunnerInformation(){
-        Log.d("Benni", "Start: Detecting Runner Information");
         Mat backgroundFrame = singleFrames.get(0).getFrame();
-        int index = 0;
         for(SingleFrame frame : singleFrames){
-            Log.d("Benni", "Detecting Runner Information; Start Frame: " + (index++));
             frame.detectRunnerInformation(backgroundFrame);
         }
-        Log.d("Benni", "Finished: Detecting Runner Information");
     }
 
     public int getMaxRunnerWidth(){

@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Runalyzer {
-    private File[] inputVideoFiles;
-    private List<Uri> inputVideoUris; //added for testing URI
+    private List<Uri> inputVideoUris;
     private List<VideoSequence> videoSequences;
     private int[] millisCreationTime;
     private int maxRunnerWidth;
@@ -23,29 +22,11 @@ public class Runalyzer {
     private int croppingWidth;
     private int croppingHeight;
 
-    public Runalyzer(){
+    public Runalyzer(List<Uri> inputVideoUris, int[] millisCreationTime){
         this.maxRunnerWidth = 0;
         this.maxRunnerHeight = 0;
-    }
-
-    public void loadVideoFiles(Context context){
-        //Seems like (not 100% sure) android does not allow to access files directly, 11+ introduced scoped storage...
-        //that's why i am trying to use URIs instead of files
-
-        //inputVideoFiles = new File(filePath).listFiles();
-
-        inputVideoUris = getVideoUris(context);
-
-        if (inputVideoUris != null) {
-            for (Uri uri : inputVideoUris) {
-                Log.d("Runalyzer", "URI: " + uri.toString());
-            }
-        }
-
-        //TODO: get millisCreationTime in another way
-        millisCreationTime = new int[inputVideoUris.size()];
-        millisCreationTime[0] = 0;      //vid01
-        millisCreationTime[1] = 4087;   //vid02
+        this.inputVideoUris = inputVideoUris;
+        this.millisCreationTime = millisCreationTime;
     }
 
     public void detectRunnerInformation(Context context){
@@ -59,7 +40,6 @@ public class Runalyzer {
     }
 
     public void detectMaxRunnerWidthHeight(){
-        Log.d("Benni", "Detecting Max Runner Width and Height");
         for(VideoSequence vidSequence : videoSequences){
             if(vidSequence.getMaxRunnerWidth() > maxRunnerWidth){
                 maxRunnerWidth = vidSequence.getMaxRunnerWidth();
@@ -73,7 +53,6 @@ public class Runalyzer {
     }
 
     public void cropSingleFrames(){
-        Log.d("Benni", "Cropping Single Frames");
         croppingWidth = maxRunnerWidth + 10;
         croppingHeight = maxRunnerHeight + 10;
         //added this code because i wanted to test the creation of videos from frames
@@ -82,6 +61,7 @@ public class Runalyzer {
         for(VideoSequence vidSequence : videoSequences){
             vidSequence.cropFrames(croppingWidth, croppingHeight);
         }
+        Log.d("Benni", "Cropping Single Frames finished");
     }
 
     public void createFinalVideo(){
