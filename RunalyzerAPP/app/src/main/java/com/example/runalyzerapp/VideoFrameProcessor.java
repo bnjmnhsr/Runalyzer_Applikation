@@ -150,7 +150,7 @@ public class VideoFrameProcessor {
             String moviesdir = moviesDir.getAbsolutePath();
             //output file with data and time stamp
             out = NIOUtils.writableFileChannel(moviesdir + "/VideoCompilation_" + System.currentTimeMillis() + ".mp4");
-            AndroidSequenceEncoder encoder = new AndroidSequenceEncoder(out, Rational.R(30, 1));
+            AndroidSequenceEncoder encoder = new AndroidSequenceEncoder(out, Rational.R(15, 1));
             for (Mat frame : frames) {
                 // Convert the Mat to a Bitmap
                 Bitmap image = Bitmap.createBitmap(frame.cols(), frame.rows(), Bitmap.Config.ARGB_8888);
