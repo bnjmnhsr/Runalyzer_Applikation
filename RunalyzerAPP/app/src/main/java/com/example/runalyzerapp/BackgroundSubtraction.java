@@ -1,59 +1,69 @@
 package com.example.runalyzerapp;
 
+import android.util.Log;
 import org.opencv.core.*;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 public class BackgroundSubtraction {
-
-    //Use to check Substracted images
-    private static int resultimg_i = 0; //for debugging only!!!
     public Mat subtract(Mat background, Mat img) {
+        Mat emptyMat = new Mat();
+        if(background.empty() || img.empty()){
+            return emptyMat;
+        }
         Mat backgroundGray = new Mat();
         Mat imgGray = new Mat();
-        Imgproc.cvtColor(background, backgroundGray, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.cvtColor(img, imgGray, Imgproc.COLOR_RGB2GRAY);
+        try {
+            Imgproc.cvtColor(background, backgroundGray, Imgproc.COLOR_RGB2GRAY);
+            Imgproc.cvtColor(img, imgGray, Imgproc.COLOR_RGB2GRAY);
+        }catch(Exception e){
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
 
         Mat backgroundGrayBlurred = new Mat();
         Mat imgGrayBlurred = new Mat();
-        Imgproc.medianBlur(backgroundGray, backgroundGrayBlurred, 3);
-        Imgproc.medianBlur(imgGray, imgGrayBlurred, 3);
+        try {
+            Imgproc.medianBlur(backgroundGray, backgroundGrayBlurred, 3);
+            Imgproc.medianBlur(imgGray, imgGrayBlurred, 3);
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
 
         if (false) { //TODO: add requirement for inverting (maybe black shirt)
-            Core.bitwise_not(backgroundGrayBlurred, backgroundGrayBlurred);
-            Core.bitwise_not(imgGrayBlurred, imgGrayBlurred);
+            try {
+                Core.bitwise_not(backgroundGrayBlurred, backgroundGrayBlurred);
+                Core.bitwise_not(imgGrayBlurred, imgGrayBlurred);
+            } catch (Exception e) {
+                Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+                return emptyMat;
+            }
         }
 
         Mat resultImg = new Mat();
-        Core.subtract(imgGrayBlurred, backgroundGrayBlurred, resultImg);
-        Imgproc.medianBlur(resultImg, resultImg, 3); //davor 7
+        try {
+            Core.subtract(imgGrayBlurred, backgroundGrayBlurred, resultImg);
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
+        try {
+            Imgproc.medianBlur(resultImg, resultImg, 3); //davor 7
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
 
         int thresholdValue = 35; // 0-255, was 35 before
         int thresholdType = 0; // 0: Binary, 1: Binary Inverted, 2: Truncate, 3: To Zero, 4: To Zero Inverted
-        Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
+        try {
+            Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
 
-
-        // Iterate over each row in the image
-//        for (int y = 0; y < resultImg.rows(); y++) {
-//            // Check if the current row is above the threshold Y value
-//            if (y < 400) {
-//                // Set all pixel values in the current row to zero
-//                for (int x = 0; x < resultImg.cols(); x++) {
-//                    resultImg.put(y, x, 0); // Set pixel value to zero
-//                }
-//            }
-//        }
-
-        // Add morphological operations to fill holes, remove noise, and dilate the mask
-        //Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-        //Imgproc.morphologyEx(resultImg, resultImg, Imgproc.MORPH_CLOSE, kernel); // fill holes
-        //Imgproc.dilate(resultImg, resultImg, kernel);
-
-
-        //Use to check Substracted images
-        //Imgcodecs.imwrite("./storage/emulated/0/Pictures/out"+resultimg_i+".jpg", resultImg);
-        //resultimg_i++;
-
+        emptyMat.release();
         backgroundGray.release();
         imgGray.release();
         backgroundGrayBlurred.release();

@@ -50,23 +50,17 @@ public class MainActivity extends AppCompatActivity {
         final Button button_recordVideo = (Button) findViewById(R.id.button_recordVideo);
         final Button button_createCompilation = (Button) findViewById(R.id.button_createCompilation);
 
-        button_recordVideo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (v == button_recordVideo) {
-                    Intent intent = new Intent(MainActivity.this, Activity_RecordVideo.class);
-                    MainActivity.this.startActivity(intent);
-                }
+        button_recordVideo.setOnClickListener(v -> {
+            if (v == button_recordVideo) {
+                Intent intent = new Intent(MainActivity.this, Activity_RecordVideo.class);
+                MainActivity.this.startActivity(intent);
             }
         });
 
-        button_createCompilation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (v == button_createCompilation) {
-                    Intent intent = new Intent(MainActivity.this, Activity_CreateCompilation.class);
-                    MainActivity.this.startActivity(intent);
-                }
+        button_createCompilation.setOnClickListener(v -> {
+            if (v == button_createCompilation) {
+                Intent intent = new Intent(MainActivity.this, Activity_CreateCompilation.class);
+                MainActivity.this.startActivity(intent);
             }
         });
 

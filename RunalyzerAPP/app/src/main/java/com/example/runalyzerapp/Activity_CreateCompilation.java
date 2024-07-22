@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Activity_CreateCompilation extends AppCompatActivity {
     private int[] millisCreationTime;
@@ -78,16 +79,37 @@ public class Activity_CreateCompilation extends AppCompatActivity {
 
         @Override
         public void run() {
+            String retval;
             Runalyzer runalyzer = new Runalyzer(inputVideoUris, millisCreationTime);
             if(running){
                 print("Detecting runner-information...");
-                runalyzer.detectRunnerInformation(Activity_CreateCompilation.this);
+                retval = runalyzer.detectRunnerInformation(Activity_CreateCompilation.this);
+                if(!Objects.equals(retval, "success")){
+                    print("Error: " + retval);
+                    runalyzerThread.stop();
+                }
+
                 print("Detecting maximum runner-width and -height...");
-                runalyzer.detectMaxRunnerWidthHeight();
+                retval = runalyzer.detectMaxRunnerWidthHeight();
+                if(!Objects.equals(retval, "success")){
+                    print("Error: " + retval);
+                    runalyzerThread.stop();
+                }
+
                 print("Cropping all single frames...");
-                runalyzer.cropSingleFrames();
+                retval = runalyzer.cropSingleFrames();
+                if(!Objects.equals(retval, "success")){
+                    print("Error: " + retval);
+                    runalyzerThread.stop();
+                }
+
                 print("Creating final video...");
-                runalyzer.createFinalVideo();
+                retval = runalyzer.createFinalVideo();
+                if(!Objects.equals(retval, "success")){
+                    print("Error: " + retval);
+                    runalyzerThread.stop();
+                }
+
                 print("Finished!");
                 try {
                     Thread.sleep(500);

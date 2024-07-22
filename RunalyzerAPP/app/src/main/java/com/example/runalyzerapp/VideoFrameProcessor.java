@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.opencv.videoio.Videoio.*;
 
@@ -40,23 +41,32 @@ public class VideoFrameProcessor {
         return frameList;
     }
 
-    public void videoToFrames(Context context, String videoFilePath, int relativeCreationTime) {
+    public String videoToFrames(Context context, String videoFilePath, int relativeCreationTime) {
+        if(Objects.equals(videoFilePath, "")){
+            Log.d("Benni","VideoFrameProcessor: videoToFrames(): Empty videoFilePath");
+            return("Empty video file path. Probably no Uri detected.");
+        }
         VideoCapture videoCapture = null;
         try {
             videoCapture = new VideoCapture(videoFilePath);
         } catch (Exception e) {
             Log.e("Benni", Log.getStackTraceString(e));
-            return;
+            return Log.getStackTraceString(e);
         }
 
         if (!videoCapture.isOpened()) {
-            Log.d("Benni", "Failed to open video file: " + videoFilePath);
-            return;
+            Log.d("Benni", "VideoFrameProcessor: videoToFrames(): Failed to open video file: " + videoFilePath);
+            return ("Failed to open video file: " + videoFilePath);
         }
 
         Mat frame = new Mat();
         double timecode = relativeCreationTime;
-        double millisBetweenFrames = (1000.0/videoCapture.get(CAP_PROP_FPS));
+        double fps = videoCapture.get(CAP_PROP_FPS);
+        if(fps == 0){
+            Log.d("Benni","VideoFrameProcessor: videoToFrames(): fps can't be read from input video");
+            return("fps can't be read from input video");
+        }
+        double millisBetweenFrames = (1000.0/fps);
 
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
@@ -68,9 +78,14 @@ public class VideoFrameProcessor {
             frameList.add(new SingleFrame(currentFrame, timecode));
             timecode += millisBetweenFrames;
         }
+        if(frameList.isEmpty()){
+            Log.d("Benni","VideoFrameProcessor: videoToFrames(): frameList still empty, videoCapture failed");
+            return("No single frame could be captured from input Video.");
+        }
 
         frame.release();
         videoCapture.release();
+        return ("success");
     }
 
     public void extractAllFrames(Context context, Uri videoUri, int relativeCreationTime) {
@@ -123,8 +138,12 @@ public class VideoFrameProcessor {
         }
     }
 
-    public void framesToVideo(List<Mat> frames) {
+    public String framesToVideo(List<Mat> frames) {
         Log.d("Benni", "Starting Frames To Video Encoding");
+        if(frames.isEmpty()){
+            Log.d("Benni","VideoFrameProcessor: framesToVideo(): frames empty, video can't be created");
+            return("No frames to create final video.");
+        }
         FileChannelWrapper out = null;
         try {
             File moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
@@ -142,16 +161,14 @@ public class VideoFrameProcessor {
             // Finalize the encoding, i.e. clear the buffers, write the header, etc.
             encoder.finish();
             Log.d("Benni", "Video written");
-        } catch (FileNotFoundException e) {
-            Log.d("Benni", "File not found");
-            throw new RuntimeException(e);
         } catch (IOException e) {
-            Log.d("Benni", "IO Exception");
-            throw new RuntimeException(e);
+            Log.e("Benni", "VideoFrameProcessor: framesToVideo(): " + Log.getStackTraceString(e));
+            return ("Create video from frames failed. Details see log.");
         } finally {
             Log.d("Benni", "Closing File");
             NIOUtils.closeQuietly(out);
         }
+        return "success";
     }
 
 

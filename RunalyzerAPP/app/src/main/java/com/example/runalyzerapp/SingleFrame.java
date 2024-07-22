@@ -54,13 +54,26 @@ public class SingleFrame {
         return timecode;
     }
 
-    public void detectRunnerInformation(Mat backgroundFrame){
+    public String detectRunnerInformation(Mat backgroundFrame){
+        String retval = null;
+        if(backgroundFrame.empty()){
+            Log.d("Benni","SingleFrame: detectRunnerInformation(): backgroundFrame is empty");
+            return ("Background frame is empty.");
+        }
         BackgroundSubtraction backgroundSubtractor = new BackgroundSubtraction();
         Mat differenceImg = backgroundSubtractor.subtract(backgroundFrame, frame);
+        if(differenceImg.empty()){
+            Log.d("Benni","SingleFrame: detectRunnerInformation(): Background subtraction failed");
+            return ("Background subtraction failed. See log for details.");
+        }
 
         //filter the image to remove noise
         ObjectDetection objDetector = new ObjectDetection();
         differenceImg = objDetector.removeNoise(differenceImg);
+        if(differenceImg.empty()){
+            Log.d("Benni","SingleFrame: detectRunnerInformation(): Object detection failed");
+            return ("Object detection failed. See log for details.");
+        }
 
         Moments moments = Imgproc.moments(differenceImg);
         //get_m00 counts number of white pixels in the image, if enough pixels counted there exists a runner...
@@ -74,9 +87,12 @@ public class SingleFrame {
         }
         else{
             hasRunner = false;
+            runnerWidth = 0;
+            runnerHeight = 0;
         }
 
         differenceImg.release();
+        return ("success");
     }
 
     public int getRunnerWidth(){ return runnerWidth; }
@@ -85,11 +101,24 @@ public class SingleFrame {
         return runnerHeight;
     }
 
-    public void cropFrame(int width, int height){
+    public String cropFrame(int width, int height){
+        if(width == 0 || height == 0){
+            Log.d("Benni", "SingleFrame: cropFrame(): Width or Height is 0");
+            return ("Width or Height is 0, frame can't be cropped.");
+        }
         if(hasRunner){
+            if(runnerPosition.getX() == 0|| runnerPosition.getY() == 0){
+                Log.d("Benni", "SingleFrame: cropFrame(): No runner position available");
+                return ("No runner position available, frame can't be cropped.");
+            }
             int xStartPos = runnerPosition.getX()-(width/2);
             int yStartPos = runnerPosition.getY()-(height/2);
+
             //TODO: find solution to crop Frame when Runner is at the edge
+            if(frame.width() == 0|| frame.height() == 0){
+                Log.d("Benni", "SingleFrame: cropFrame(): Frame size is 0");
+                return ("No frame size available, frame can't be cropped.");
+            }
             if(xStartPos > 0 && xStartPos < (frame.width()-width)){
                 if(yStartPos > 0 && yStartPos < (frame.height()-height)){
                     Rect rectCrop = new Rect(xStartPos, yStartPos, width, height);
@@ -97,5 +126,6 @@ public class SingleFrame {
                 }
             }
         }
+        return "success";
     }
 }

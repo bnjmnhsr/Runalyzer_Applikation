@@ -21,6 +21,7 @@ public class ObjectDetection {
         //create a bounding rectangle around the runner object
         //try to remove noise in the image by making the area around the runner black
 
+        Mat emptyMat = new Mat();
         Mat processedImg = new Mat();
         Mat kernel = new Mat();
         Mat fill_kernel = new Mat();
@@ -113,8 +114,10 @@ public class ObjectDetection {
 //            System.out.println("m00: " + moments.get_m00());
             }
         }catch(Exception e){
-            Log.e("Benni", Log.getStackTraceString(e));
+            Log.e("Benni", "ObjectDetection: removeNoise(): " + Log.getStackTraceString(e));
+            return emptyMat;
         }finally {
+            emptyMat.release();
             processedImg.release();
             kernel.release();
             fill_kernel.release();
