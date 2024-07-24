@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.hardware.camera2.CaptureRequest;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -16,7 +17,10 @@ import android.os.Looper;
 import android.provider.MediaStore;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop;
+import androidx.camera.core.Camera;
 import androidx.camera.video.PendingRecording;
 import androidx.camera.video.Recorder;
 import androidx.camera.video.Recording;
@@ -42,6 +46,12 @@ import androidx.camera.video.VideoRecordEvent;
 import androidx.core.content.PermissionChecker;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+
+import androidx.camera.camera2.interop.Camera2CameraControl;
+import androidx.camera.camera2.interop.Camera2CameraInfo;
+import androidx.camera.camera2.interop.CaptureRequestOptions;
+import android.hardware.camera2.CameraCharacteristics;
+import android.util.Range;
 
 public class Activity_RecordVideo extends AppCompatActivity {
     private ActivityRecordVideoBinding viewBinding;
@@ -131,6 +141,7 @@ public class Activity_RecordVideo extends AppCompatActivity {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         cameraProviderFuture.addListener(new Runnable() {
+            @OptIn(markerClass = ExperimentalCamera2Interop.class)
             @Override
             public void run() {
                 try {
@@ -142,7 +153,7 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     preview.setSurfaceProvider(viewBinding.viewFinder.getSurfaceProvider());
 
                     Recorder recorder = new Recorder.Builder()
-                            .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+                            .setQualitySelector(QualitySelector.from(Quality.FHD))
                             .build();
                     videoCapture = VideoCapture.withOutput(recorder);
 
@@ -153,8 +164,39 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     cameraProvider.unbindAll();
 
                     // Bind use cases to camera
-                    cameraProvider.bindToLifecycle(
+                    Camera camera = cameraProvider.bindToLifecycle(
                             Activity_RecordVideo.this, cameraSelector, preview, videoCapture);
+
+                    Camera2CameraInfo camera2Info = Camera2CameraInfo.from(camera.getCameraInfo());
+
+                    // Get supported frame rate ranges
+                    Range<Integer>[] supportedFpsRanges = camera2Info.getCameraCharacteristic(
+                            CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+
+                    //Log Range
+                    for (Range<Integer> range : supportedFpsRanges) {
+                        Log.d("Benni", "Supported FPS range: " + range);
+                    }
+
+                    //support 30 fps
+                    Range<Integer> fpsRange = null;
+
+                    for (Range<Integer> range : supportedFpsRanges) {
+                        if (range.contains(30)) {
+                            fpsRange = range;
+                            break;
+                        }
+                    }
+
+                    // Get Camera2CameraControl
+                    Camera2CameraControl camera2Control = Camera2CameraControl.from(camera.getCameraControl());
+
+                    // Set the frame rate range
+                    CaptureRequestOptions requestOptions = new CaptureRequestOptions.Builder()
+                            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
+                            .build();
+
+                    camera2Control.setCaptureRequestOptions(requestOptions);
 
                 } catch (Exception exc) {
                     Log.e(TAG, "Use case binding failed", exc);

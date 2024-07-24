@@ -1,5 +1,7 @@
 package com.example.runalyzerapp;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -151,7 +153,7 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 Log.d("Benni", "Starting runalyzerThread");
                 statusText = (TextView) findViewById(R.id.textView_status);
                 statusText.setText("Starting Runalyzer...");
-                runalyzerThread = new WorkerUsingThread();
+                runalyzerThread = new WorkerUsingThread(Activity_CreateCompilation.this);
                 runalyzerThread.start();
             }
         });
@@ -208,6 +210,11 @@ public class Activity_CreateCompilation extends AppCompatActivity {
     class WorkerUsingThread implements Runnable {
         private volatile boolean running = false;
         private Thread thread;
+        private Activity activity;
+
+        WorkerUsingThread(Activity activity) {
+            this.activity = activity;
+        }
 
         private void print(final String s){
             runOnUiThread(new Runnable() {
@@ -276,12 +283,19 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 running = false;
                 while(true){
                     try {
+                        Log.d("Benni", "Before Join");
                         thread.join();
+                        Log.d("Benni", "Thread stopped");
                         break;
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    } catch (Exception e) {
+                        Log.d("Benni", "Error stopping thread");
                     }
                 }
+                String filePath = FilePathHolder.getInstance().getFilePath();
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("filePath", filePath);
+                activity.setResult(Activity.RESULT_OK, resultIntent);
+                activity.finish();
             }
         }
     }

@@ -1,12 +1,18 @@
 package com.example.runalyzerapp;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -25,7 +31,10 @@ import android.widget.Toast;
 
 import org.opencv.android.OpenCVLoader;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
+    final int REQUEST_CODE_CREATE_COMPILATION = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         button_createCompilation.setOnClickListener(v -> {
             if (v == button_createCompilation) {
                 Intent intent = new Intent(MainActivity.this, Activity_CreateCompilation.class);
-                MainActivity.this.startActivity(intent);
+                MainActivity.this.startActivityForResult(intent, REQUEST_CODE_CREATE_COMPILATION);
             }
         });
 
@@ -128,6 +137,33 @@ public class MainActivity extends AppCompatActivity {
                 {
                     takePermission();
                 }
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_CREATE_COMPILATION) {
+            if(resultCode == Activity.RESULT_OK){
+                String filePath = data.getStringExtra("filePath");
+                Log.d("Benni", "File path: " + filePath);
+
+                String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath();
+                File directory = new File(directoryPath);
+                File[] files = directory.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        MediaScannerConnection.scanFile(this,
+                                new String[] { file.getAbsolutePath() }, null, null);
+                    }
+                }
+
+                // Create an Intent to view the video file and start the activity
+                Uri uri = Uri.parse(filePath);
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.setDataAndType(uri, "video/mp4");
+                startActivity(intent);
             }
         }
     }

@@ -25,6 +25,7 @@ import static org.opencv.videoio.Videoio.*;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
@@ -147,9 +148,10 @@ public class VideoFrameProcessor {
         FileChannelWrapper out = null;
         try {
             File moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-            String moviesdir = moviesDir.getAbsolutePath();
+            String filePath = moviesDir.getAbsolutePath() + "/VideoCompilation_" + System.currentTimeMillis() + ".mp4";
+            FilePathHolder.getInstance().setFilePath(filePath);
             //output file with data and time stamp
-            out = NIOUtils.writableFileChannel(moviesdir + "/VideoCompilation_" + System.currentTimeMillis() + ".mp4");
+            out = NIOUtils.writableFileChannel(filePath);
             AndroidSequenceEncoder encoder = new AndroidSequenceEncoder(out, Rational.R(15, 1));
             for (Mat frame : frames) {
                 // Convert the Mat to a Bitmap
