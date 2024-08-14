@@ -33,6 +33,8 @@ public class Runalyzer {
     public String detectRunnerInformation(Context context){
         String retval = null;
         videoSequences = new ArrayList<>();
+        int totalMillisAllVideos = 0;
+
         if(inputVideoUris.isEmpty()){
             Log.d("Benni", "Runalyzer: detectRunnerInformation(): No input videos (Uris size = 0)");
             return ("No input videos.");
@@ -47,11 +49,14 @@ public class Runalyzer {
                 return ("No creation time in milliseconds available for video " + i);
             }
             videoSequences.add(new VideoSequence(context, videoUri, millisCreationTime[i]));
-            retval = videoSequences.get(i).separateToFrames(context);
+            totalMillisAllVideos += videoSequences.get(i).getVideoDurationInMillis();
+        }
+        for(VideoSequence vidSeq : videoSequences){
+            retval = vidSeq.separateToFrames(context, totalMillisAllVideos);
             if(!Objects.equals(retval, "success")){
                 return retval;
             }
-            retval = videoSequences.get(i).detectRunnerInformation();
+            retval = vidSeq.detectRunnerInformation(context);
             if(!Objects.equals(retval, "success")){
                 return retval;
             }

@@ -16,22 +16,28 @@ public class VideoSequence {
     private String videoFilePath;
     private Uri videoUri;
     private int relativeCreationTime;
+    private int videoDurationInMillis;
     private List<SingleFrame> singleFrames = new ArrayList<>();
 
     public VideoSequence(Context context, Uri videoUri, int relativeCreationTime) {
         this.videoUri = videoUri;
         this.videoFilePath = getRealPathFromURI(context, videoUri);
         this.relativeCreationTime = relativeCreationTime;
+        this.videoDurationInMillis = getVideoDurationFromURI(context, videoUri);
     }
 
     public List<SingleFrame> getSingleFrames(){
         return singleFrames;
     }
 
-    public String separateToFrames(Context context){
+    public int getVideoDurationInMillis(){
+        return videoDurationInMillis;
+    }
+
+    public String separateToFrames(Context context, int totalMillisAllVideos){
         String retval = null;
         VideoFrameProcessor videoFrames = new VideoFrameProcessor();
-        retval = videoFrames.videoToFrames(context, videoFilePath, relativeCreationTime);
+        retval = videoFrames.videoToFrames(context, videoFilePath, relativeCreationTime, totalMillisAllVideos);
         if(!Objects.equals(retval, "success")){
             return retval;
         }
@@ -45,7 +51,7 @@ public class VideoSequence {
         return retval;
     }
 
-    public String detectRunnerInformation(){
+    public String detectRunnerInformation(Context context){
         String retval = null;
         boolean anyFrameHasRunner = false;
         if(singleFrames.isEmpty()){
@@ -54,7 +60,7 @@ public class VideoSequence {
         }
         Mat backgroundFrame = singleFrames.get(0).getFrame();
         for(SingleFrame frame : singleFrames){
-            retval = frame.detectRunnerInformation(backgroundFrame);
+            retval = frame.detectRunnerInformation(backgroundFrame, context);
             if(!Objects.equals(retval, "success")) {
                 return retval;
             }
@@ -118,7 +124,6 @@ public class VideoSequence {
         return "success";
     }
 
-    //that was an idea, if we can still work with real paths we can use this to find it...
     public String getRealPathFromURI(Context context, Uri contentUri) {
         if(contentUri == null){
             Log.d("Benni","VideoSequence: getRealPathFromURI(): contentUri == null");
@@ -134,6 +139,24 @@ public class VideoSequence {
             String result = cursor.getString(column_index);
             cursor.close();
             return result;
+        }
+    }
+
+    public int getVideoDurationFromURI(Context context, Uri contentUri) {
+        if(contentUri == null){
+            Log.d("Benni","VideoSequence: getVideoDurationFromURI(): contentUri == null");
+            return -1;
+        }
+        String[] proj = { MediaStore.Video.Media.DURATION };
+        Cursor cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+        if (cursor == null) {
+            return -1;
+        } else {
+            cursor.moveToFirst();
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
+            int videoDurationMillis = Integer.parseInt(cursor.getString(column_index));
+            cursor.close();
+            return videoDurationMillis;
         }
     }
 }

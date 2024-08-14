@@ -1,7 +1,10 @@
 package com.example.runalyzerapp;
 
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
@@ -54,7 +57,7 @@ public class SingleFrame {
         return timecode;
     }
 
-    public String detectRunnerInformation(Mat backgroundFrame){
+    public String detectRunnerInformation(Mat backgroundFrame, Context context){
         String retval = null;
         if(backgroundFrame.empty()){
             Log.d("Benni","SingleFrame: detectRunnerInformation(): backgroundFrame is empty");
@@ -62,6 +65,16 @@ public class SingleFrame {
         }
         BackgroundSubtraction backgroundSubtractor = new BackgroundSubtraction();
         Mat differenceImg = backgroundSubtractor.subtract(backgroundFrame, frame);
+
+//        int newTimecode = (int)timecode % (((int)(timecode / 1000000))*1000000);
+
+//        if(newTimecode == 648050){
+//            VideoFrameProcessor vfp = new VideoFrameProcessor();
+//            Bitmap img = Bitmap.createBitmap(differenceImg.cols(), differenceImg.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(differenceImg, img);
+//            vfp.saveBitmapToGallery(context, Integer.toString(newTimecode), img);
+//        }
+
         if(differenceImg.empty()){
             Log.d("Benni","SingleFrame: detectRunnerInformation(): Background subtraction failed");
             return ("Background subtraction failed. See log for details.");

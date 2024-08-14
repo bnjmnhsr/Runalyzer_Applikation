@@ -42,7 +42,7 @@ public class VideoFrameProcessor {
         return frameList;
     }
 
-    public String videoToFrames(Context context, String videoFilePath, int relativeCreationTime) {
+    public String videoToFrames(Context context, String videoFilePath, int relativeCreationTime, int totalMillisAllVideos) {
         if(Objects.equals(videoFilePath, "")){
             Log.d("Benni","VideoFrameProcessor: videoToFrames(): Empty videoFilePath");
             return("Empty video file path. Probably no Uri detected.");
@@ -69,13 +69,23 @@ public class VideoFrameProcessor {
         }
         double millisBetweenFrames = (1000.0/fps);
 
+        //calculate most efficient Mat size:
+        long totalFrameCountAllVideos = (int)(totalMillisAllVideos/1000.0 * fps) + 1;
+        long sizeOfOneMatInByte = 1920*1080*3; //assume CV_8UC3-format (8 bit per channel, 3 channels(RGB))
+        long totalMatSize = sizeOfOneMatInByte * totalFrameCountAllVideos;
+        double reductionFactor = 1800000000.0 / totalMatSize; //use 1.8 GB memory for Mats
+
+        Mat previousFrame = new Mat();
+
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
             Mat currentFrame = new Mat();
 
             frame.copyTo(currentFrame); //TODO: maybe remove
-            double imgRatio = (double)currentFrame.height()/(double)currentFrame.width();
-            Imgproc.resize(currentFrame, currentFrame, new Size(500,500*imgRatio));
+            int newMatWidth = (int)(Math.sqrt(reductionFactor) * currentFrame.width());
+            int newMatHeight = (int)(newMatWidth * ((double)currentFrame.height()/(double)currentFrame.width()));
+            Imgproc.resize(currentFrame, currentFrame, new Size(newMatWidth,newMatHeight));
+
             frameList.add(new SingleFrame(currentFrame, timecode));
             timecode += millisBetweenFrames;
         }
@@ -187,9 +197,8 @@ public class VideoFrameProcessor {
             if (imageUri != null) {
                 OutputStream outputStream = context.getContentResolver().openOutputStream(imageUri);
                 if (outputStream != null) {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 20, outputStream);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                     outputStream.close();
-                    Log.d("Benni", filename + " saved to gallery");
                 } else {
                     Log.e("Benni", "OutputStream is null.");
                 }
