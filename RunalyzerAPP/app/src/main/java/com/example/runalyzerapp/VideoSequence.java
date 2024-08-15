@@ -1,5 +1,7 @@
 package com.example.runalyzerapp;
 
+import static org.opencv.videoio.Videoio.CAP_PROP_FPS;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -7,6 +9,9 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.videoio.VideoCapture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +22,8 @@ public class VideoSequence {
     private Uri videoUri;
     private int relativeCreationTime;
     private int videoDurationInMillis;
-    private List<SingleFrame> singleFrames = new ArrayList<>();
+    private List<SingleFrame> selectedSingleFrames = new ArrayList<>();
+    private RunnerDetection runnerDetector = new BackgroundSubtraction();
 
     public VideoSequence(Context context, Uri videoUri, int relativeCreationTime) {
         this.videoUri = videoUri;
@@ -26,8 +32,8 @@ public class VideoSequence {
         this.videoDurationInMillis = getVideoDurationFromURI(context, videoUri);
     }
 
-    public List<SingleFrame> getSingleFrames(){
-        return singleFrames;
+    public List<SingleFrame> getSelectedSingleFrames(){
+        return selectedSingleFrames;
     }
 
     public int getVideoDurationInMillis(){
@@ -35,55 +41,79 @@ public class VideoSequence {
     }
 
     public String separateToFrames(Context context, int totalMillisAllVideos){
-        String retval = null;
-        VideoFrameProcessor videoFrames = new VideoFrameProcessor();
-        retval = videoFrames.videoToFrames(context, videoFilePath, relativeCreationTime, totalMillisAllVideos);
-        if(!Objects.equals(retval, "success")){
-            return retval;
+        if(Objects.equals(videoFilePath, "")){
+            Log.d("Benni","VideoSequence: separateToFrames(): Empty videoFilePath");
+            return("Empty video file path. Probably no Uri detected.");
         }
-        //videoFrames.extractAllFrames(context, videoUri, relativeCreationTime);
+        VideoCapture videoCapture = null;
+        try {
+            videoCapture = new VideoCapture(videoFilePath);
+        } catch (Exception e) {
+            Log.e("Benni", Log.getStackTraceString(e));
+            return Log.getStackTraceString(e);
+        }
 
-        singleFrames = videoFrames.getFrameList();
-        if(singleFrames.isEmpty()){
-            Log.d("Benni","VideoSequence: separateToFrames(): Empty list of single frames");
-            return("Empty list of single frames.");
+        if (!videoCapture.isOpened()) {
+            Log.d("Benni", "VideoSequence: separateToFrames(): Failed to open video file: " + videoFilePath);
+            return ("Failed to open video file: " + videoFilePath);
         }
-        return retval;
-    }
 
-    public String detectRunnerInformation(Context context){
-        String retval = null;
-        boolean anyFrameHasRunner = false;
-        if(singleFrames.isEmpty()){
-            Log.d("Benni","VideoSequence: detectRunnerInformation(): List singleFrames is empty");
-            return ("No single frames available");
+        Mat frame = new Mat();
+        double timecode = relativeCreationTime;
+        double fps = videoCapture.get(CAP_PROP_FPS);
+        if(fps == 0){
+            Log.d("Benni","VideoSequence: separateToFrames(): fps can't be read from input video");
+            return("fps can't be read from input video");
         }
-        Mat backgroundFrame = singleFrames.get(0).getFrame();
-        for(SingleFrame frame : singleFrames){
-            retval = frame.detectRunnerInformation(backgroundFrame, context);
-            if(!Objects.equals(retval, "success")) {
-                return retval;
+        double millisBetweenFrames = (1000.0/fps);
+
+        //calculate most efficient Mat size:
+        long totalFrameCountAllVideos = (int)(totalMillisAllVideos/1000.0 * fps) + 1;
+        long sizeOfOneMatInByte = 1920*1080*3; //assume CV_8UC3-format (8 bit per channel, 3 channels(RGB))
+        long totalMatSize = sizeOfOneMatInByte * totalFrameCountAllVideos;
+        double reductionFactor = 1800000000.0 / totalMatSize; //use 1.8 GB memory for Mats
+
+        Mat previousFrame = null;
+
+        while (videoCapture.read(frame)) {
+            // Save the current frame as a Mat object in the list
+            Mat currentFrame = new Mat();
+
+            frame.copyTo(currentFrame); //TODO: maybe remove
+            int newMatWidth = (int)(Math.sqrt(reductionFactor) * currentFrame.width());
+            int newMatHeight = (int)(newMatWidth * ((double)currentFrame.height()/(double)currentFrame.width()));
+            Imgproc.resize(currentFrame, currentFrame, new Size(newMatWidth,newMatHeight));
+
+            SingleFrame singleFrame = new SingleFrame(currentFrame, previousFrame, timecode);
+            singleFrame.setRunnerInformation(runnerDetector.detectRunnerInformation(singleFrame));
+            if(singleFrame.hasRunner()){
+                selectedSingleFrames.add(singleFrame);
             }
-            if(frame.hasRunner()){
-                anyFrameHasRunner = true;
-            }
+
+            timecode += millisBetweenFrames;
+            previousFrame = currentFrame;
         }
-        if(!anyFrameHasRunner){
-            Log.d("Benni","VideoSequence: detectRunnerInformation(): No runner in video detected");
-            return ("No runner in video detected.");
+
+        if(selectedSingleFrames.isEmpty()){
+            Log.d("Benni","VideoSequence: separateToFrames(): frameList still empty, videoCapture failed");
+            return("No single frame could be captured from input Video.");
         }
-        return retval;
+
+        frame.release();
+        videoCapture.release();
+
+        return ("success");
     }
 
     public int getMaxRunnerWidth(){
         int maxRunnerWidth = 0;
-        if(singleFrames.isEmpty()){
+        if(selectedSingleFrames.isEmpty()){
             Log.d("Benni", "VideoSequence: getMaxRunnerWidth(): No single frames");
             return -1;
         }
-        for(SingleFrame frame : singleFrames){
-            if(frame.getRunnerWidth() > maxRunnerWidth){
-                maxRunnerWidth = frame.getRunnerWidth();
+        for(SingleFrame frame : selectedSingleFrames){
+            if(frame.getRunnerInformation().getRunnerWidth() > maxRunnerWidth){
+                maxRunnerWidth = frame.getRunnerInformation().getRunnerWidth();
             }
         }
         return maxRunnerWidth;
@@ -91,29 +121,29 @@ public class VideoSequence {
 
     public int getMaxRunnerHeight(){
         int maxRunnerHeight = 0;
-        if(singleFrames.isEmpty()){
+        if(selectedSingleFrames.isEmpty()){
             Log.d("Benni", "VideoSequence: getMaxRunnerHeight(): No single frames");
             return -1;
         }
-        for(SingleFrame frame : singleFrames){
-            if(frame.getRunnerHeight() > maxRunnerHeight){
-                maxRunnerHeight = frame.getRunnerHeight();
+        for(SingleFrame frame : selectedSingleFrames){
+            if(frame.getRunnerInformation().getRunnerHeight() > maxRunnerHeight){
+                maxRunnerHeight = frame.getRunnerInformation().getRunnerHeight();
             }
         }
         return maxRunnerHeight;
     }
 
     public String cropFrames(int width, int height){
-        String retval = null;
+        String retval;
         if(width == 0 || height == 0){
             Log.d("Benni", "VideoSequence: cropFrames(): Width or Height is 0");
             return ("Width or Height is 0, frames can't be cropped.");
         }
-        if(singleFrames.isEmpty()){
+        if(selectedSingleFrames.isEmpty()){
             Log.d("Benni", "VideoSequence: cropFrames(): No single frames");
             return ("No single frames, frames can't be cropped.");
         }
-        for(SingleFrame frame : singleFrames){
+        for(SingleFrame frame : selectedSingleFrames){
             if(frame.hasRunner()){
                 retval = frame.cropFrame(width, height);
                 if(!Objects.equals(retval, "success")){

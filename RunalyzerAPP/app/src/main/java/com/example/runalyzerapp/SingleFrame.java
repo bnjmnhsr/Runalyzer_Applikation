@@ -1,7 +1,10 @@
 package com.example.runalyzerapp;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -10,35 +13,31 @@ import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 public class SingleFrame {
     private Mat frame;
+    private Mat previousFrame;
     private Mat croppedFrame = null;
     private boolean hasRunner;
-    private Vector runnerPosition;
-    private int runnerWidth;
-    private int runnerHeight;
     private double timecode;
+    private RunnerInformation runnerInformation;
 
-    public SingleFrame(){
-        frame = new Mat();
-        hasRunner = false;
-        runnerPosition = new Vector();
-        runnerWidth = 0;
-        runnerHeight = 0;
-        timecode = 0;
-    }
-
-    public SingleFrame(Mat frame, double timecode){
+    public SingleFrame(Mat frame, Mat previousFrame, double timecode){
         this.frame = frame;
-        hasRunner = false;
-        runnerPosition = new Vector();
-        runnerWidth = 0;
-        runnerHeight = 0;
+        this.previousFrame = previousFrame;
         this.timecode = timecode;
+        hasRunner = false;
+        runnerInformation = new RunnerInformation();
     }
 
     public Mat getFrame(){
         return frame;
+    }
+
+    public Mat getPreviousFrame(){
+        return previousFrame;
     }
 
     public Mat getCroppedFrame(){
@@ -49,69 +48,24 @@ public class SingleFrame {
         return hasRunner;
     }
 
-    public Vector getRunnerPosition(){
-        return runnerPosition;
+    public void setHasRunner(boolean hasRunner){
+        this.hasRunner = hasRunner;
+        if(!hasRunner){
+            runnerInformation = new RunnerInformation();
+            runnerInformation.setEmptyRunnerInformation();
+        }
+    }
+
+    public RunnerInformation getRunnerInformation(){
+        return runnerInformation;
+    }
+
+    public void setRunnerInformation(RunnerInformation runnerInformation){
+        this.runnerInformation = runnerInformation;
     }
 
     public double getTimecode(){
         return timecode;
-    }
-
-    public String detectRunnerInformation(Mat backgroundFrame, Context context){
-        String retval = null;
-        if(backgroundFrame.empty()){
-            Log.d("Benni","SingleFrame: detectRunnerInformation(): backgroundFrame is empty");
-            return ("Background frame is empty.");
-        }
-        BackgroundSubtraction backgroundSubtractor = new BackgroundSubtraction();
-        Mat differenceImg = backgroundSubtractor.subtract(backgroundFrame, frame);
-
-//        int newTimecode = (int)timecode % (((int)(timecode / 1000000))*1000000);
-
-//        if(newTimecode == 648050){
-//            VideoFrameProcessor vfp = new VideoFrameProcessor();
-//            Bitmap img = Bitmap.createBitmap(differenceImg.cols(), differenceImg.rows(), Bitmap.Config.ARGB_8888);
-//            Utils.matToBitmap(differenceImg, img);
-//            vfp.saveBitmapToGallery(context, Integer.toString(newTimecode), img);
-//        }
-
-        if(differenceImg.empty()){
-            Log.d("Benni","SingleFrame: detectRunnerInformation(): Background subtraction failed");
-            return ("Background subtraction failed. See log for details.");
-        }
-
-        //filter the image to remove noise
-        ObjectDetection objDetector = new ObjectDetection();
-        differenceImg = objDetector.removeNoise(differenceImg);
-        if(differenceImg.empty()){
-            Log.d("Benni","SingleFrame: detectRunnerInformation(): Object detection failed");
-            return ("Object detection failed. See log for details.");
-        }
-
-        Moments moments = Imgproc.moments(differenceImg);
-        //get_m00 counts number of white pixels in the image, if enough pixels counted there exists a runner...
-        //TODO: check what's a correct value to identify a runner (depends also on camera-distance)
-        if(moments.get_m00() > 50000 && moments.get_m00() < 120000){
-            hasRunner = true;
-            runnerPosition.setX((int) (moments.get_m10() / moments.get_m00()));
-            runnerPosition.setY((int) (moments.get_m01() / moments.get_m00()));
-            runnerWidth = objDetector.getObjectWidth();
-            runnerHeight = objDetector.getObjectHeight();
-        }
-        else{
-            hasRunner = false;
-            runnerWidth = 0;
-            runnerHeight = 0;
-        }
-
-        differenceImg.release();
-        return ("success");
-    }
-
-    public int getRunnerWidth(){ return runnerWidth; }
-
-    public int getRunnerHeight(){
-        return runnerHeight;
     }
 
     public String cropFrame(int width, int height){
@@ -120,12 +74,12 @@ public class SingleFrame {
             return ("Width or Height is 0, frame can't be cropped.");
         }
         if(hasRunner){
-            if(runnerPosition.getX() == 0|| runnerPosition.getY() == 0){
+            if(runnerInformation.getRunnerPosition().getX() == 0 || runnerInformation.getRunnerPosition().getY() == 0){
                 Log.d("Benni", "SingleFrame: cropFrame(): No runner position available");
                 return ("No runner position available, frame can't be cropped.");
             }
-            int xStartPos = runnerPosition.getX()-(width/2);
-            int yStartPos = runnerPosition.getY()-(height/2);
+            int xStartPos = runnerInformation.getRunnerPosition().getX()-(width/2);
+            int yStartPos = runnerInformation.getRunnerPosition().getY()-(height/2);
 
             //TODO: find solution to crop Frame when Runner is at the edge
             if(frame.width() == 0|| frame.height() == 0){

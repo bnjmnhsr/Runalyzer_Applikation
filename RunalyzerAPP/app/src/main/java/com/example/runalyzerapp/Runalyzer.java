@@ -20,8 +20,7 @@ public class Runalyzer {
     private int[] millisCreationTime;
     private int maxRunnerWidth;
     private int maxRunnerHeight;
-    private int croppingWidth;
-    private int croppingHeight;
+    private FinalVideo finalVideo;
 
     public Runalyzer(List<Uri> inputVideoUris, int[] millisCreationTime){
         this.maxRunnerWidth = 0;
@@ -53,10 +52,6 @@ public class Runalyzer {
         }
         for(VideoSequence vidSeq : videoSequences){
             retval = vidSeq.separateToFrames(context, totalMillisAllVideos);
-            if(!Objects.equals(retval, "success")){
-                return retval;
-            }
-            retval = vidSeq.detectRunnerInformation(context);
             if(!Objects.equals(retval, "success")){
                 return retval;
             }
@@ -106,14 +101,16 @@ public class Runalyzer {
             return ("Maximum runner width or height is 0");
         }
         // Ensure the cropping dimensions are even
-        croppingWidth = (maxRunnerWidth % 2 == 0 ? maxRunnerWidth + 10 : maxRunnerWidth + 11);
-        croppingHeight = (maxRunnerHeight % 2 == 0 ? maxRunnerHeight + 10 : maxRunnerHeight +11);
+        int croppingWidth = (maxRunnerWidth % 2 == 0 ? maxRunnerWidth + 10 : maxRunnerWidth + 11);
+        int croppingHeight = (maxRunnerHeight % 2 == 0 ? maxRunnerHeight + 10 : maxRunnerHeight +11);
         if (croppingWidth < 100) {
             croppingWidth = 100;
         }
         if (croppingHeight < 100) {
-            croppingWidth = 100;
+            croppingHeight = 100;
         }
+
+        finalVideo = new FinalVideo(croppingWidth, croppingHeight);
 
         Log.d("Benni", "Max Cropping Width: " + croppingWidth + " Max Cropping Height: " + croppingHeight);
 
@@ -133,22 +130,21 @@ public class Runalyzer {
     public String createFinalVideo(){
         String retval = null;
         Log.d("Benni", "Creating Final Video");
-        if(croppingWidth == 0 || croppingHeight == 0){
+        if(finalVideo.getWidth() == 0 || finalVideo.getHeight() == 0){
             Log.d("Benni", "Runalyzer: createFinalVideo(): cropping width or height is 0");
             return ("Cropping width or height is 0, final video can't be created.");
         }
-        VideoCompilator videoCompilator = new VideoCompilator(croppingWidth, croppingHeight);
 
         if(videoSequences.isEmpty()){
             Log.d("Benni", "Runalyzer: createFinalVideo(): No video sequences");
             return ("No video sequences to create final video.");
         }
-        retval = videoCompilator.selectFinalFrames(videoSequences);
+        retval = finalVideo.setFinalFrames(videoSequences);
         if(!Objects.equals(retval, "success")){
             return retval;
         }
 
-        retval = videoCompilator.createFinalVideo();
+        retval = finalVideo.create();
         if(!Objects.equals(retval, "success")){
             return retval;
         }
