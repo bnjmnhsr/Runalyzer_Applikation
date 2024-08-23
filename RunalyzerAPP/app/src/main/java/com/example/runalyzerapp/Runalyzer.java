@@ -1,7 +1,5 @@
 package com.example.runalyzerapp;
 
-import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -9,7 +7,6 @@ import android.provider.MediaStore;
 import android.net.Uri;
 import android.util.Log;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -20,6 +17,7 @@ public class Runalyzer {
     private int[] millisCreationTime;
     private int maxRunnerWidth;
     private int maxRunnerHeight;
+    private int middleYPosition;
     private FinalVideo finalVideo;
 
     public Runalyzer(List<Uri> inputVideoUris, int[] millisCreationTime){
@@ -59,38 +57,76 @@ public class Runalyzer {
         return retval;
     }
 
-    public String detectMaxRunnerWidthHeight(){
+    public String detectRunnerDimensions(){
         if(videoSequences.isEmpty()){
-            Log.d("Benni", "Runalyzer: detectMaxRunnerWidthHeight(): No video sequences");
+            Log.d("Benni", "Runalyzer: detectRunnerDimensions(): No video sequences");
             return ("No video sequences to detect max runner width and height.");
         }
-        int actMaxRunnerWidth;
-        int actMaxRunnerHeight;
+
+        int highestYPosition = 0;
+        int lowestYPosition = videoSequences.get(0).getSelectedSingleFrames().get(0).getFrame().height();
+        if(lowestYPosition == 0){
+            Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Frame-Height of 0 detected, error.");
+            return ("Frame-Height of 0 detected");
+        }
+
+        int actMaxRunnerWidth, actMaxRunnerHeight, actLowestYPosition, actHighestYPosition;
         for(VideoSequence vidSequence : videoSequences){
+            //detect maximum runner width:
             actMaxRunnerWidth = vidSequence.getMaxRunnerWidth();
             if(actMaxRunnerWidth == -1){
                 return ("Detecting max runner width failed. See log for details.");
             }else if(actMaxRunnerWidth == 0){
-                Log.d("Benni", "Runalyzer: detectMaxRunnerWidthHeight(): Video has no runner (max runner width = 0)");
+                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner width = 0)");
                 return ("Video has no runner (max runner width = 0)");
             }
             if(actMaxRunnerWidth > maxRunnerWidth){
                 maxRunnerWidth = actMaxRunnerWidth;
             }
 
+            //detect maximum runner height:
             actMaxRunnerHeight = vidSequence.getMaxRunnerHeight();
             if(actMaxRunnerHeight == -1){
                 return ("Detecting max runner height failed. See log for details.");
             }else if(actMaxRunnerHeight == 0){
-                Log.d("Benni", "Runalyzer: detectMaxRunnerWidthHeight(): Video has no runner (max runner height = 0)");
+                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner height = 0)");
                 return ("Video has no runner (max runner height = 0)");
             }
             if(actMaxRunnerHeight > maxRunnerHeight){
                 maxRunnerHeight = actMaxRunnerHeight;
             }
+
+            //detect lowest y-position:
+            actLowestYPosition = vidSequence.getLowestYPosition();
+            if(actLowestYPosition == -1){
+                return ("Detecting max runner width failed. See log for details.");
+            }else if(actLowestYPosition == 0){
+                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
+                return ("All SingleFrames have Runner-Y-Position = 0");
+            }
+            if(actLowestYPosition < lowestYPosition){
+                lowestYPosition = actLowestYPosition;
+            }
+
+            //detect highest y-position:
+            actHighestYPosition = vidSequence.getHighestYPosition();
+            if(actHighestYPosition == -1){
+                return ("Detecting max runner width failed. See log for details.");
+            }else if(actHighestYPosition == 0){
+                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
+                return ("All SingleFrames have Runner-Y-Position = 0");
+            }
+            if(actHighestYPosition > highestYPosition){
+                highestYPosition = actHighestYPosition;
+            }
         }
+
+        middleYPosition = (highestYPosition + lowestYPosition) / 2;
+
         Log.d("Benni", "MaxRunnerWidth: " + maxRunnerWidth );
         Log.d("Benni", "MaxRunnerHeight: " + maxRunnerHeight );
+        Log.d("Benni", "MiddleYPosition: " + middleYPosition );
+
         return "success";
     }
 
@@ -101,8 +137,8 @@ public class Runalyzer {
             return ("Maximum runner width or height is 0");
         }
         // Ensure the cropping dimensions are even
-        int croppingWidth = (maxRunnerWidth % 2 == 0 ? maxRunnerWidth + 10 : maxRunnerWidth + 11);
-        int croppingHeight = (maxRunnerHeight % 2 == 0 ? maxRunnerHeight + 10 : maxRunnerHeight +11);
+        int croppingWidth = maxRunnerWidth*2;
+        int croppingHeight = maxRunnerHeight*2;
         if (croppingWidth < 100) {
             croppingWidth = 100;
         }
@@ -112,14 +148,14 @@ public class Runalyzer {
 
         finalVideo = new FinalVideo(croppingWidth, croppingHeight);
 
-        Log.d("Benni", "Max Cropping Width: " + croppingWidth + " Max Cropping Height: " + croppingHeight);
+        Log.d("Benni", "Cropping Width: " + croppingWidth + ", Cropping Height: " + croppingHeight);
 
         if(videoSequences.isEmpty()){
             Log.d("Benni", "Runalyzer: cropSingleFrames(): No video sequences");
             return ("No video sequences to crop single frames.");
         }
         for(VideoSequence vidSequence : videoSequences){
-            retval = vidSequence.cropFrames(croppingWidth, croppingHeight);
+            retval = vidSequence.cropFrames(croppingWidth, croppingHeight, middleYPosition);
             if(!Objects.equals(retval, "success")){
                 return retval;
             }
