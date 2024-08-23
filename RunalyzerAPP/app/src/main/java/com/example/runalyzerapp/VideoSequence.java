@@ -75,6 +75,8 @@ public class VideoSequence {
 
         Mat previousFrame = null;
 
+        boolean onceHasRunner = false;
+        int framesWithoutRunner = 0;
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
             Mat currentFrame = new Mat();
@@ -86,8 +88,15 @@ public class VideoSequence {
 
             SingleFrame singleFrame = new SingleFrame(currentFrame, previousFrame, timecode);
             singleFrame.setRunnerInformation(runnerDetector.detectRunnerInformation(singleFrame));
+
             if(singleFrame.hasRunner()){
+                onceHasRunner = true;
                 selectedSingleFrames.add(singleFrame);
+            } else if(onceHasRunner){
+                framesWithoutRunner++;
+                if(framesWithoutRunner == 5){ //stop capturing frames when 5 frames have no runner if once a runner was detected (onceHasRunner)
+                    break;
+                }
             }
 
             timecode += millisBetweenFrames;
@@ -133,7 +142,58 @@ public class VideoSequence {
         return maxRunnerHeight;
     }
 
-    public String cropFrames(int width, int height){
+    public int getLowestYPosition(){
+        if(selectedSingleFrames.isEmpty()){
+            Log.d("Benni", "VideoSequence: getMiddleYPosition(): No single frames.");
+            return -1;
+        }
+
+        int actYPos;
+        int lowestYPosition = selectedSingleFrames.get(0).getFrame().height();
+        if(lowestYPosition == 0){
+            Log.d("Benni", "VideoSequence: getMiddleYPosition(): Frame-Height of 0 detected, error.");
+            return -1;
+        }
+
+        for(SingleFrame frame : selectedSingleFrames){
+            actYPos = frame.getRunnerInformation().getRunnerPosition().getY();
+            if(actYPos == 0){
+                Log.d("Benni", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
+                return -1;
+            }
+
+            if(actYPos < lowestYPosition){
+                lowestYPosition = actYPos;
+            }
+        }
+
+        return lowestYPosition;
+    }
+
+    public int getHighestYPosition(){
+        if(selectedSingleFrames.isEmpty()){
+            Log.d("Benni", "VideoSequence: getMiddleYPosition(): No single frames.");
+            return -1;
+        }
+
+        int actYPos;
+        int highestYPosition = 0;
+
+        for(SingleFrame frame : selectedSingleFrames){
+            actYPos = frame.getRunnerInformation().getRunnerPosition().getY();
+            if(actYPos == 0){
+                Log.d("Benni", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
+                return -1;
+            }
+            if(actYPos > highestYPosition){
+                highestYPosition = actYPos;
+            }
+        }
+
+        return highestYPosition;
+    }
+
+    public String cropFrames(int width, int height, int yPosition){
         String retval;
         if(width == 0 || height == 0){
             Log.d("Benni", "VideoSequence: cropFrames(): Width or Height is 0");
@@ -145,7 +205,7 @@ public class VideoSequence {
         }
         for(SingleFrame frame : selectedSingleFrames){
             if(frame.hasRunner()){
-                retval = frame.cropFrame(width, height);
+                retval = frame.cropFrame(width, height, yPosition);
                 if(!Objects.equals(retval, "success")){
                     return retval;
                 }
