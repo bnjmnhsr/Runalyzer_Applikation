@@ -240,7 +240,7 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 }
 
                 print("Detecting maximum runner-width and -height...");
-                retval = runalyzer.detectMaxRunnerWidthHeight();
+                retval = runalyzer.detectRunnerDimensions();
                 if(!Objects.equals(retval, "success")){
                     print("Error: " + retval);
                     runalyzerThread.stop();
