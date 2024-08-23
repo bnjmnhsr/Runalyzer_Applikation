@@ -10,14 +10,13 @@ import android.util.Log;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class BackgroundSubtraction implements RunnerDetection {
     @Override
@@ -25,7 +24,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         RunnerInformation runnerInformation;
 
         if(singleFrame.getPreviousFrame() == null){
-            //this is the first frame in the video, should has no runner
+            //this is the first frame in the video, should have no runner
             singleFrame.setHasRunner(false);
             return singleFrame.getRunnerInformation();
         }
@@ -38,69 +37,42 @@ public class BackgroundSubtraction implements RunnerDetection {
             return null;
         }
 
-
-
-        //find all white-pixel contours
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        try {
-            Imgproc.findContours(differenceImg, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-        } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
-            return null;
-        }
-        hierarchy.release(); //we don't need hierarchy
-        differenceImg.release();
-
-        if(contours.isEmpty()){
-            singleFrame.setHasRunner(false);
-            runnerInformation = new RunnerInformation();
-            return runnerInformation;
-        }
-
-        //detect biggest contour --> should be runner
-        double areaOfActualContour = 0;
-        double areaOfBiggestContour = 0;
-        int indexOfBiggestContour = 0;
-        for (int i = 0; i < contours.size(); ++i) {
-            try {
-                areaOfActualContour = Imgproc.contourArea(contours.get(i));
-            } catch (Exception e) {
-                Log.e("Benni", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
-                return null;
-            }
-            if(areaOfActualContour > areaOfBiggestContour){
-                areaOfBiggestContour = areaOfActualContour;
-                indexOfBiggestContour = i;
-            }
-        }
-
         //detect runner information
         Moments moments;
         try {
-            moments = Imgproc.moments(contours.get(indexOfBiggestContour));
+            moments = Imgproc.moments(differenceImg);
         } catch (Exception e) {
             Log.e("Benni", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
             return null;
         }
         //TODO: check what's a correct value to identify a runner (depends also on camera-distance)
-        double test_variable = moments.get_m00();
-        if(moments.get_m00() > 200){
+        if(moments.get_m00() > 0){
             singleFrame.setHasRunner(true);
             int centerX = (int) (moments.get_m10() / moments.get_m00());
             int centerY = (int) (moments.get_m01() / moments.get_m00());
-            int runnerWidth = contours.get(indexOfBiggestContour).width();
-            int runnerHeight = contours.get(indexOfBiggestContour).height();
 
-            runnerInformation = new RunnerInformation(new Vector(centerX, centerY), runnerWidth, runnerHeight);
+            Rect boundingRect = Imgproc.boundingRect(differenceImg);
+//            String filename = Integer.toString((int)singleFrame.getTimecode());
+//            Imgproc.cvtColor(differenceImg, differenceImg, Imgproc.COLOR_GRAY2RGB);
+//            Imgproc.rectangle(differenceImg, boundingRect, new Scalar(0, 255, 0));
+//            Imgproc.drawMarker(differenceImg, new Point(centerX, centerY), new Scalar(255, 0, 0), Imgproc.MARKER_CROSS, Imgproc.LINE_8, 1);
+//            saveMatToGallery(context, differenceImg, filename);
+
+            differenceImg.release();
+
+            //TODO: remove after using fixed focus of camera (here focus changed, that's why rectangle has width of total image-width)
+            //if((int)singleFrame.getTimecode() == 34651077){ //white
+            if((int)singleFrame.getTimecode() == 35558496){ //yellow
+                boundingRect.width = 1;
+                boundingRect.height = 1;
+            }
+
+            runnerInformation = new RunnerInformation(new Vector(centerX, centerY), boundingRect.width, boundingRect.height);
         }
         else{
             singleFrame.setHasRunner(false);
+            differenceImg.release();
             runnerInformation = new RunnerInformation();
-        }
-
-        for (MatOfPoint contour : contours) {
-            contour.release();
         }
 
         return runnerInformation;
@@ -111,51 +83,24 @@ public class BackgroundSubtraction implements RunnerDetection {
         if(background.empty() || img.empty()){
             return emptyMat;
         }
-        Mat backgroundGray = new Mat();
-        Mat imgGray = new Mat();
-        try {
-            Imgproc.cvtColor(background, backgroundGray, Imgproc.COLOR_RGB2GRAY);
-            Imgproc.cvtColor(img, imgGray, Imgproc.COLOR_RGB2GRAY);
-        }catch(Exception e){
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
-            return emptyMat;
-        }
 
-        Mat backgroundGrayBlurred = new Mat();
-        Mat imgGrayBlurred = new Mat();
-        try {
-            Imgproc.medianBlur(backgroundGray, backgroundGrayBlurred, 3);
-            Imgproc.medianBlur(imgGray, imgGrayBlurred, 3);
-        } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
-            return emptyMat;
-        }
-
-        if (false) { //TODO: add requirement for inverting (maybe black shirt)
-            try {
-                Core.bitwise_not(backgroundGrayBlurred, backgroundGrayBlurred);
-                Core.bitwise_not(imgGrayBlurred, imgGrayBlurred);
-            } catch (Exception e) {
-                Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
-                return emptyMat;
-            }
-        }
-
+        //do subtraction
+        Mat resultImg1 = new Mat();
+        Mat resultImg2 = new Mat();
         Mat resultImg = new Mat();
         try {
-            Core.subtract(imgGrayBlurred, backgroundGrayBlurred, resultImg);
-        } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
-            return emptyMat;
-        }
-        try {
-            Imgproc.medianBlur(resultImg, resultImg, 3); //davor 7
+            Core.subtract(img, background, resultImg1);
+            Core.subtract(background, img, resultImg2);
+            Core.add(resultImg1, resultImg2, resultImg);
+            resultImg1.release();
+            resultImg2.release();
         } catch (Exception e) {
             Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 
-        int thresholdValue = 35; // 0-255, was 35 before
+        //binarize colored difference-img
+        int thresholdValue = 65; // 1-255
         int thresholdType = 0; // 0: Binary, 1: Binary Inverted, 2: Truncate, 3: To Zero, 4: To Zero Inverted
         try {
             Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
@@ -164,12 +109,33 @@ public class BackgroundSubtraction implements RunnerDetection {
             return emptyMat;
         }
 
-        emptyMat.release();
-        backgroundGray.release();
-        imgGray.release();
-        backgroundGrayBlurred.release();
-        imgGrayBlurred.release();
+        //grayscale colored binarized-image
+        try {
+            Imgproc.cvtColor(resultImg, resultImg, Imgproc.COLOR_RGB2GRAY);
+        }catch(Exception e){
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
 
+        //binarize
+        thresholdValue = 1; // 1-255
+        thresholdType = 0; // 0: Binary, 1: Binary Inverted, 2: Truncate, 3: To Zero, 4: To Zero Inverted
+        try {
+            Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
+
+        //remove noise
+        try {
+            Imgproc.erode(resultImg, resultImg, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3, 3)));
+        } catch (Exception e) {
+            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            return emptyMat;
+        }
+
+        emptyMat.release();
         return resultImg;
     }
 
