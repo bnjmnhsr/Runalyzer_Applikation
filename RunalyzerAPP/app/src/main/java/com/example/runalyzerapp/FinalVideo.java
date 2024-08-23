@@ -49,9 +49,9 @@ public class FinalVideo {
             }
             for(SingleFrame fr : vs.getSelectedSingleFrames()){
                 if(fr.hasRunner() && fr.getTimecode() >= switchingTimecode){
-                    if(fr.getRunnerInformation().getRunnerPosition().getX() == 0 || fr.getFrame().width() == 0){
-                        Log.d("Benni", "FinalVideo: setFinalFrames(): Runner position or frame width is 0");
-                        return ("Runner position or frame width is 0, final frame can't be selected.");
+                    if(fr.getRunnerInformation().getRunnerWidth() == 0){
+                        Log.d("Benni", "FinalVideo: setFinalFrames(): Frame width is 0");
+                        return ("Frame width is 0, final frame can't be selected.");
                     }
                     relativeRunnerPosition = (double) fr.getRunnerInformation().getRunnerPosition().getX() / fr.getFrame().width();
                     if(vs != videoSequences.get(videoSequences.size() - 1) && relativeRunnerPosition >= 0.875){
