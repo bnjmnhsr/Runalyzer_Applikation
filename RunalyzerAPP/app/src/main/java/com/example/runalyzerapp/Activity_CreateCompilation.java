@@ -41,6 +41,10 @@ public class Activity_CreateCompilation extends AppCompatActivity {
     private EditText editTextVideo1;
     private EditText editTextVideo2;
 
+    private int video_pos1 = -1;
+
+    private int video_pos2 = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,13 +101,14 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                     int totalMilliseconds = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
 
                     if (millisCreationTime != null && inputVideoUris != null) {
-                        int video_pos1 = Integer.parseInt((String) spinner1.getSelectedItem()) - 1;
+                        video_pos1 = Integer.parseInt((String) spinner1.getSelectedItem()) - 1;
                         inputVideoUris.set(video_pos1, videoPickerUris.get(0));
                         millisCreationTime[video_pos1] = totalMilliseconds;
                         Log.d("Benni", "millisCreationTime[" + video_pos1 + "] = " + millisCreationTime[video_pos1] + " video_pos2 = " + video_pos1);
                         boolean allSet;
                         allSet = Arrays.stream(millisCreationTime).noneMatch(time -> time == -1) &&
-                                inputVideoUris.stream().noneMatch(uri -> uri == null);
+                                inputVideoUris.stream().noneMatch(uri -> uri == null) &&
+                                video_pos1 != -1 && video_pos2 != -1 && video_pos1 != video_pos2;
                         button3.setEnabled(allSet);
                     }
                 } catch (NumberFormatException e) {
@@ -130,13 +135,14 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                     int totalMilliseconds = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
 
                     if (millisCreationTime != null && inputVideoUris != null) {
-                        int video_pos2 = Integer.parseInt((String) spinner2.getSelectedItem()) - 1;
+                        video_pos2 = Integer.parseInt((String) spinner2.getSelectedItem()) - 1;
                         inputVideoUris.set(video_pos2, videoPickerUris.get(1));
                         millisCreationTime[video_pos2] = totalMilliseconds;
                         Log.d("Benni", "millisCreationTime[" + video_pos2 + "] = " + millisCreationTime[video_pos2] + " video_pos2 = " + video_pos2);
                         boolean allSet;
                         allSet = Arrays.stream(millisCreationTime).noneMatch(time -> time == -1) &&
-                                inputVideoUris.stream().noneMatch(uri -> uri == null);
+                                inputVideoUris.stream().noneMatch(uri -> uri == null) &&
+                                video_pos1 != -1 && video_pos2 != -1 && video_pos1 != video_pos2;
                         button3.setEnabled(allSet);
                     }
 

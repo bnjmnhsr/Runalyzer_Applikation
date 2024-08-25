@@ -19,6 +19,7 @@ import android.provider.MediaStore;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
+import android.hardware.camera2.CameraMetadata;
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop;
 import androidx.camera.core.Camera;
 import androidx.camera.video.PendingRecording;
@@ -61,6 +62,10 @@ public class Activity_RecordVideo extends AppCompatActivity {
 
     private ExecutorService cameraExecutor;
 
+    private Range<Integer> fpsRange = null;
+
+    private Camera camera = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,8 +85,14 @@ public class Activity_RecordVideo extends AppCompatActivity {
     }
 
     // Implements VideoCapture use case, including start and stop capturing.
+    @OptIn(markerClass = ExperimentalCamera2Interop.class)
     private void captureVideo() {
         if (videoCapture == null) return;
+
+        if (fpsRange == null) {
+            Toast.makeText(getBaseContext(), "30 FPS Setting not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         viewBinding.videoCaptureButton.setEnabled(false);
 
@@ -92,7 +103,27 @@ public class Activity_RecordVideo extends AppCompatActivity {
             return;
         }
 
-        // Create and start a new recording session
+        Camera2CameraControl camera2Control = Camera2CameraControl.from(camera.getCameraControl());
+
+        // Set the specifics, I also saw there is this mode:  CONTROL_AF_MODE_CONTINUOUS_VIDEO
+        CaptureRequestOptions requestOptions = new CaptureRequestOptions.Builder()
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true) // Lock AE
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, true) // Lock AWB
+                .build();
+
+        CaptureRequestOptions requestOptions2 = new CaptureRequestOptions.Builder()
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, false) // Lock AE
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, false) // Lock AWB
+                .build();
+
+        camera2Control.setCaptureRequestOptions(requestOptions);
+
         String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis());
         ContentValues contentValues = new ContentValues();
@@ -125,6 +156,7 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     Uri videoUri = ((VideoRecordEvent.Finalize) recordEvent).getOutputResults().getOutputUri();
                     String msg = "Video capture succeeded: " + videoUri;
                     Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
+                    camera2Control.setCaptureRequestOptions(requestOptions2);
                 } else {
                     recording.close();
                     recording = null;
@@ -149,7 +181,8 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
 
                     // Preview
-                    Preview preview = new Preview.Builder().build();
+                    Preview.Builder previewBuilder = new Preview.Builder();
+                    Preview preview = previewBuilder.build();
                     preview.setSurfaceProvider(viewBinding.viewFinder.getSurfaceProvider());
 
                     Recorder recorder = new Recorder.Builder()
@@ -164,7 +197,7 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     cameraProvider.unbindAll();
 
                     // Bind use cases to camera
-                    Camera camera = cameraProvider.bindToLifecycle(
+                    camera = cameraProvider.bindToLifecycle(
                             Activity_RecordVideo.this, cameraSelector, preview, videoCapture);
 
                     Camera2CameraInfo camera2Info = Camera2CameraInfo.from(camera.getCameraInfo());
@@ -178,26 +211,12 @@ public class Activity_RecordVideo extends AppCompatActivity {
                         Log.d("Benni", "Supported FPS range: " + range);
                     }
 
-                    //support 30 fps
-                    Range<Integer> fpsRange = null;
-
                     for (Range<Integer> range : supportedFpsRanges) {
                         if (range.contains(30)) {
                             fpsRange = range;
                             break;
                         }
                     }
-
-                    // Get Camera2CameraControl
-                    Camera2CameraControl camera2Control = Camera2CameraControl.from(camera.getCameraControl());
-
-                    // Set the frame rate range
-                    CaptureRequestOptions requestOptions = new CaptureRequestOptions.Builder()
-                            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
-                            .build();
-
-                    camera2Control.setCaptureRequestOptions(requestOptions);
-
                 } catch (Exception exc) {
                     Log.e(TAG, "Use case binding failed", exc);
                 }
