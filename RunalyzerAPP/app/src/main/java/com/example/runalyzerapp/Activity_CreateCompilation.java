@@ -35,15 +35,11 @@ public class Activity_CreateCompilation extends AppCompatActivity {
     private List<Uri> videoPickerUris;
     private WorkerUsingThread runalyzerThread;
     private TextView statusText;
+    private TextView infoText;
     private VideoView videoView1;
-    private VideoView videoView2;
-
     private EditText editTextVideo1;
-    private EditText editTextVideo2;
-
-    private int video_pos1 = -1;
-
-    private int video_pos2 = -1;
+    private int[] video_pos;
+    private int selector = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,19 +54,21 @@ public class Activity_CreateCompilation extends AppCompatActivity {
 
         videoView1 = findViewById(R.id.videoView1);
         editTextVideo1 = findViewById(R.id.editTextVideo1);
-        videoView2 = findViewById(R.id.videoView2);
-        editTextVideo2 = findViewById(R.id.editTextVideo2);
 
         Button button1 = findViewById(R.id.buttonEditText1);
-        Button button2 = findViewById(R.id.buttonEditText2);
         Button button3 = findViewById(R.id.buttonTextView);
 
         button1.setEnabled(false);
-        button2.setEnabled(false);
         button3.setEnabled(false);
 
         Spinner spinner1 = findViewById(R.id.number_spinner1);
-        Spinner spinner2 = findViewById(R.id.number_spinner2);
+        statusText = (TextView) findViewById(R.id.textView_status);
+        statusText.setText(R.string.info_screen);
+
+        infoText = (TextView) findViewById(R.id.textInfo);
+        if(selector == 0) {
+            infoText.setText(R.string.first_video);
+        }
 
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -81,83 +79,85 @@ public class Activity_CreateCompilation extends AppCompatActivity {
 
         // Apply the adapter to the spinner
         spinner1.setAdapter(adapter);
-        spinner2.setAdapter(adapter);
+        //spinner2.setAdapter(adapter);
 
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // receive milliscreationtime as int from editText
-                try {
-                    String timeInput = editTextVideo1.getText().toString();
+                if (selector >= inputVideoUris.size()) {
+                    Toast.makeText(Activity_CreateCompilation.this, "Finished Gathering the Data", Toast.LENGTH_LONG).show();
+                    button3.setEnabled(true);
+                    return;
+                }
 
-                    // Split the input string into hours, minutes, seconds, and milliseconds
+                String timeInput = editTextVideo1.getText().toString();
+
+                if(!timeInput.matches("\\d{2}:\\d{2}:\\d{2}\\.\\d{3}")) {
+                    Toast.makeText(Activity_CreateCompilation.this, "Invalid input. Please enter a valid time in the format HH:MM:SS.mmm", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                try {
                     String[] timeParts = timeInput.split("[:.]");
                     int hours = Integer.parseInt(timeParts[0]);
                     int minutes = Integer.parseInt(timeParts[1]);
                     int seconds = Integer.parseInt(timeParts[2]);
                     int milliseconds = Integer.parseInt(timeParts[3]);
 
-                    // Convert the time to milliseconds
                     int totalMilliseconds = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
 
                     if (millisCreationTime != null && inputVideoUris != null) {
-                        video_pos1 = Integer.parseInt((String) spinner1.getSelectedItem()) - 1;
-                        inputVideoUris.set(video_pos1, videoPickerUris.get(0));
-                        millisCreationTime[video_pos1] = totalMilliseconds;
-                        Log.d("Benni", "millisCreationTime[" + video_pos1 + "] = " + millisCreationTime[video_pos1] + " video_pos2 = " + video_pos1);
-                        boolean allSet;
-                        allSet = Arrays.stream(millisCreationTime).noneMatch(time -> time == -1) &&
-                                inputVideoUris.stream().noneMatch(uri -> uri == null) &&
-                                video_pos1 != -1 && video_pos2 != -1 && video_pos1 != video_pos2;
-                        button3.setEnabled(allSet);
+                        int selectedPos = Integer.parseInt((String) spinner1.getSelectedItem()) - 1;
+
+                        if (selectedPos < inputVideoUris.size()) {
+                            if (Arrays.stream(video_pos, 0, selector).anyMatch(pos -> pos == selectedPos)) {
+                                Toast.makeText(Activity_CreateCompilation.this, "Position already used", Toast.LENGTH_LONG).show();
+                                return;
+                            }
+                        } else if ( (selectedPos + 1) > inputVideoUris.size()) {
+                            Toast.makeText(Activity_CreateCompilation.this, "Invalid position", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        video_pos[selector] = selectedPos;
+                        inputVideoUris.set(selectedPos, videoPickerUris.get(selector));
+                        millisCreationTime[selectedPos] = totalMilliseconds;
+
+                        selector++;
+                        if (selector < videoPickerUris.size()) {
+                            switch (selector) {
+                                case 1:
+                                    infoText.setText(R.string.second_video);
+                                    break;
+                                case 2:
+                                    infoText.setText(R.string.third_video);
+                                    break;
+                                case 3:
+                                    infoText.setText(R.string.fourth_video);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            videoView1.setVideoURI(videoPickerUris.get(selector));
+                            videoView1.start();
+                        } else {
+                            Toast.makeText(Activity_CreateCompilation.this, "Finished Gathering the Data", Toast.LENGTH_LONG).show();
+                            button3.setEnabled(true);
+                            infoText.setText(R.string.video_done);
+                            button1.setEnabled(false);
+                        }
                     }
                 } catch (NumberFormatException e) {
-                    // Display an error message to the user
-                    Toast.makeText(Activity_CreateCompilation.this, "Invalid input. Please enter a valid time in the format HH:MM:SS.mmm", Toast.LENGTH_LONG).show();
+                    Toast.makeText(Activity_CreateCompilation.this, "Invalid time input.", Toast.LENGTH_LONG).show();
                 }
             }
-        });
 
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    String timeInput = editTextVideo2.getText().toString();
-
-                    // Split the input string into hours, minutes, seconds, and milliseconds
-                    String[] timeParts = timeInput.split("[:.]");
-                    int hours = Integer.parseInt(timeParts[0]);
-                    int minutes = Integer.parseInt(timeParts[1]);
-                    int seconds = Integer.parseInt(timeParts[2]);
-                    int milliseconds = Integer.parseInt(timeParts[3]);
-
-                    // Convert the time to milliseconds
-                    int totalMilliseconds = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-
-                    if (millisCreationTime != null && inputVideoUris != null) {
-                        video_pos2 = Integer.parseInt((String) spinner2.getSelectedItem()) - 1;
-                        inputVideoUris.set(video_pos2, videoPickerUris.get(1));
-                        millisCreationTime[video_pos2] = totalMilliseconds;
-                        Log.d("Benni", "millisCreationTime[" + video_pos2 + "] = " + millisCreationTime[video_pos2] + " video_pos2 = " + video_pos2);
-                        boolean allSet;
-                        allSet = Arrays.stream(millisCreationTime).noneMatch(time -> time == -1) &&
-                                inputVideoUris.stream().noneMatch(uri -> uri == null) &&
-                                video_pos1 != -1 && video_pos2 != -1 && video_pos1 != video_pos2;
-                        button3.setEnabled(allSet);
-                    }
-
-                } catch (NumberFormatException e) {
-                    // Display an error message to the user
-                    Toast.makeText(Activity_CreateCompilation.this, "Invalid input. Please enter a valid time in the format HH:MM:SS.mmm", Toast.LENGTH_LONG).show();
-                }
-            }
         });
 
         button3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d("Benni", "Starting runalyzerThread");
-                statusText = (TextView) findViewById(R.id.textView_status);
                 statusText.setText("Starting Runalyzer...");
                 runalyzerThread = new WorkerUsingThread(Activity_CreateCompilation.this);
                 runalyzerThread.start();
@@ -176,24 +176,18 @@ public class Activity_CreateCompilation extends AppCompatActivity {
 
                         //TODO: get millisCreationTime in another way
                         millisCreationTime = new int[uris.size()];
-                        millisCreationTime[0] = -1;
-                        millisCreationTime[1] = -1;
+                        video_pos = new int[uris.size()];
+
+                        Arrays.fill(video_pos, -1);
+                        Arrays.fill(millisCreationTime, -1);
 
                         button1.setEnabled(true);
-                        button2.setEnabled(true);
-
 
                         videoView1.setVideoURI(uris.get(0));
                         videoView1.start();
-
-                        videoView2.setVideoURI(uris.get(1));
-                        videoView2.start();
-
-                        //millisCreationTime[0] = 0;      //vid01
-                        //millisCreationTime[1] = 4087;   //vid02
-
                     } else {
                         Log.d("PhotoPicker", "No media selected");
+                        finish();
                     }
                 });
 
@@ -207,9 +201,6 @@ public class Activity_CreateCompilation extends AppCompatActivity {
         super.onResume();
         if(videoPickerUris != null && videoView1 != null){
             videoView1.start();
-        }
-        if (videoPickerUris != null && videoView2 != null){
-            videoView2.start();
         }
     }
 
