@@ -60,13 +60,6 @@ public class BackgroundSubtraction implements RunnerDetection {
 
             differenceImg.release();
 
-            //TODO: remove after using fixed focus of camera (here focus changed, that's why rectangle has width of total image-width)
-            //if((int)singleFrame.getTimecode() == 34651077){ //white
-            if((int)singleFrame.getTimecode() == 35558496){ //yellow
-                boundingRect.width = 1;
-                boundingRect.height = 1;
-            }
-
             runnerInformation = new RunnerInformation(new Vector(centerX, centerY), boundingRect.width, boundingRect.height);
         }
         else{
@@ -128,6 +121,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         }
 
         //remove noise
+        //TODO: make kernel size dependent of Mat size
         try {
             Imgproc.erode(resultImg, resultImg, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3, 3)));
         } catch (Exception e) {
