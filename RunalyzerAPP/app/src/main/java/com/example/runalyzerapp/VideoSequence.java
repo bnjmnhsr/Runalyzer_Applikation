@@ -14,6 +14,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,7 +72,7 @@ public class VideoSequence {
         long totalFrameCountAllVideos = (int)(totalMillisAllVideos/1000.0 * fps) + 1;
         long sizeOfOneMatInByte = 1920*1080*3; //assume CV_8UC3-format (8 bit per channel, 3 channels(RGB))
         long totalMatSize = sizeOfOneMatInByte * totalFrameCountAllVideos;
-        double reductionFactor = 1800000000.0 / totalMatSize; //use 1.8 GB memory for Mats
+        double reductionFactor = 1500000000.0 / totalMatSize; //use 1.5 GB memory for Mats
 
         Mat previousFrame = null;
 
@@ -91,10 +92,11 @@ public class VideoSequence {
 
             if(singleFrame.hasRunner()){
                 onceHasRunner = true;
+                framesWithoutRunner = 0;
                 selectedSingleFrames.add(singleFrame);
             } else if(onceHasRunner){
                 framesWithoutRunner++;
-                if(framesWithoutRunner == 5){ //stop capturing frames when 5 frames have no runner if once a runner was detected (onceHasRunner)
+                if(framesWithoutRunner == 5){ //stop capturing frames when 5 frames in a row have no runner and if once a runner was detected (onceHasRunner)
                     break;
                 }
             }
@@ -107,6 +109,9 @@ public class VideoSequence {
             Log.d("Benni","VideoSequence: separateToFrames(): frameList still empty, videoCapture failed");
             return("No single frame could be captured from input Video.");
         }
+
+        //remove frames with outliner values for width, height and centerY to equalize e.g. shaking camera or focus change
+        selectedSingleFrames.removeAll(checkIfFramesCanBeRemoved(selectedSingleFrames));
 
         frame.release();
         videoCapture.release();
@@ -248,5 +253,115 @@ public class VideoSequence {
             cursor.close();
             return videoDurationMillis;
         }
+    }
+
+    private List<SingleFrame> checkIfFramesCanBeRemoved(List<SingleFrame> singleframes){
+        List<SingleFrame> framesToRemove = new ArrayList<>();
+
+        int selectedFramecount = singleframes.size();
+        int[] runnerWidths = new int[selectedFramecount];
+        int[] runnerHeights = new int[selectedFramecount];
+        int[] centerY = new int[selectedFramecount];
+        for(int i = 0; i < selectedFramecount; i++){
+            runnerWidths[i] = singleframes.get(i).getRunnerInformation().getRunnerWidth();
+            runnerHeights[i] = singleframes.get(i).getRunnerInformation().getRunnerHeight();
+            centerY[i] = singleframes.get(i).getRunnerInformation().getRunnerPosition().getY();
+        }
+
+        double upperBound_runnerWidths = calculateUpperBound(runnerWidths, 15);
+        double upperBound_runnerHeights = calculateUpperBound(runnerHeights, 15);
+        double upperBound_centerY = calculateUpperBound(centerY, 5); //start- and end-frames sometimes have higher YPos because feet is detected first/last
+        double lowerBound_centerY = calculateLowerBound(centerY, 15);
+
+        for(SingleFrame fr : singleframes){
+            if(fr.getRunnerInformation().getRunnerWidth() > upperBound_runnerWidths){
+                if(!framesToRemove.contains(fr)){
+                    framesToRemove.add(fr);
+                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because width= " + fr.getRunnerInformation().getRunnerWidth() + " > upperBound= " + upperBound_runnerWidths);
+                }
+            }
+            if(fr.getRunnerInformation().getRunnerHeight() > upperBound_runnerHeights){
+                if(!framesToRemove.contains(fr)){
+                    framesToRemove.add(fr);
+                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because height= " + fr.getRunnerInformation().getRunnerHeight() + " > upperBound= " + upperBound_runnerHeights);
+                }
+            }
+            if(fr.getRunnerInformation().getRunnerPosition().getY() > upperBound_centerY){
+                if(!framesToRemove.contains(fr)){
+                    framesToRemove.add(fr);
+                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because centerY= " + fr.getRunnerInformation().getRunnerPosition().getY() + " > upperBound= " + upperBound_centerY);
+                }
+            }
+            if(fr.getRunnerInformation().getRunnerPosition().getY() < lowerBound_centerY){
+                if(!framesToRemove.contains(fr)){
+                    framesToRemove.add(fr);
+                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because centerY= " + fr.getRunnerInformation().getRunnerPosition().getY() + " < lowerBound= " + lowerBound_centerY);
+                }
+            }
+        }
+
+        return framesToRemove;
+    }
+
+    private double calculateUpperBound(int[] data, int percentile){
+        // Interquartile Range (IQR) method
+
+        Arrays.sort(data);
+
+        int n = data.length;
+        double index =  percentile / 100.0 * (n - 1);
+        int lower = (int) Math.floor(index);
+        int upper = (int) Math.ceil(index);
+        double Q1;
+        if(lower == upper){
+            Q1 = data[lower];
+        }else{
+            Q1 = data[lower] + (index - lower) * (data[upper] - data[lower]);
+        }
+
+        index =  (100 - percentile) / 100.0 * (n - 1);
+        lower = (int) Math.floor(index);
+        upper = (int) Math.ceil(index);
+        double Q3;
+        if(lower == upper){
+            Q3 = data[lower];
+        }else{
+            Q3 = data[lower] + (index - lower) * (data[upper] - data[lower]);
+        }
+
+        double IQR = Q3 - Q1;
+
+        return Q3 + 1.5 * IQR;
+    }
+
+    private double calculateLowerBound(int[] data, int percentile){
+        // Interquartile Range (IQR) method
+
+        Arrays.sort(data);
+
+        int n = data.length;
+        double index =  percentile / 100.0 * (n - 1);
+        int lower = (int) Math.floor(index);
+        int upper = (int) Math.ceil(index);
+        double Q1;
+        if(lower == upper){
+            Q1 = data[lower];
+        }else{
+            Q1 = data[lower] + (index - lower) * (data[upper] - data[lower]);
+        }
+
+        index =  (100 - percentile) / 100.0 * (n - 1);
+        lower = (int) Math.floor(index);
+        upper = (int) Math.ceil(index);
+        double Q3;
+        if(lower == upper){
+            Q3 = data[lower];
+        }else{
+            Q3 = data[lower] + (index - lower) * (data[upper] - data[lower]);
+        }
+
+        double IQR = Q3 - Q1;
+
+        return Q1 - 1.5 * IQR;
     }
 }
