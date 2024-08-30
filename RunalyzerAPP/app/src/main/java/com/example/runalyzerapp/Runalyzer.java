@@ -53,6 +53,10 @@ public class Runalyzer {
             if(!Objects.equals(retval, "success")){
                 return retval;
             }
+            retval = vidSeq.smoothXPos();
+            if(!Objects.equals(retval, "success")){
+                return retval;
+            }
         }
         return retval;
     }

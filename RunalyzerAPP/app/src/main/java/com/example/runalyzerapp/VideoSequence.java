@@ -91,14 +91,7 @@ public class VideoSequence {
             singleFrame.setRunnerInformation(runnerDetector.detectRunnerInformation(singleFrame));
 
             if(singleFrame.hasRunner()){
-                onceHasRunner = true;
-                framesWithoutRunner = 0;
                 selectedSingleFrames.add(singleFrame);
-            } else if(onceHasRunner){
-                framesWithoutRunner++;
-                if(framesWithoutRunner == 5){ //stop capturing frames when 5 frames in a row have no runner and if once a runner was detected (onceHasRunner)
-                    break;
-                }
             }
 
             timecode += millisBetweenFrames;
@@ -196,6 +189,30 @@ public class VideoSequence {
         }
 
         return highestYPosition;
+    }
+
+    public String smoothXPos(){
+        if(selectedSingleFrames.isEmpty()){
+            Log.d("Benni", "VideoSequence: smoothXPos(): No single frames");
+            return ("No single frames, xPos can't be smoothed.");
+        }
+
+        int smoothFactor = 10;   //the lower the smoothFactor, the more erratic, but better matching with original xPos; the higher the smoothFactor, the more stable, but worse matching with original xPos
+        int diffXPositions, newXPos;
+        float step = 0;
+        for(int i = 10; i < selectedSingleFrames.size()-10; i++){      //keep xPos of first and last 10 frames as they are because xPos at edge is not representative
+            if(smoothFactor > selectedSingleFrames.size()-20){
+                break;
+            }
+            if(i < selectedSingleFrames.size()-10-smoothFactor+1){      //step needs to be stable for the last frames (count of smoothFactor)
+                diffXPositions = selectedSingleFrames.get(i + smoothFactor-1).getRunnerInformation().getRunnerPosition().getX() - selectedSingleFrames.get(i-1).getRunnerInformation().getCorrectedRunnerPosition().getX();
+                step = (float) diffXPositions / smoothFactor;
+            }
+            newXPos = selectedSingleFrames.get(i-1).getRunnerInformation().getCorrectedRunnerPosition().getX() + Math.round(step);
+            selectedSingleFrames.get(i).changeXPosition(newXPos);
+        }
+
+        return "success";
     }
 
     public String cropFrames(int width, int height, int yPosition){

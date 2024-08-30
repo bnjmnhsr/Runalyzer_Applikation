@@ -55,6 +55,10 @@ public class SingleFrame {
         this.runnerInformation = runnerInformation;
     }
 
+    public void changeXPosition(int newXPos){
+        runnerInformation.correctRunnerPosition(new Vector(newXPos, runnerInformation.getRunnerPosition().getY()));
+    }
+
     public double getTimecode(){
         return timecode;
     }
@@ -65,7 +69,7 @@ public class SingleFrame {
             return ("Width, Height or Y-Position is 0, frame can't be cropped.");
         }
         if(hasRunner){
-            if(runnerInformation.getRunnerPosition().getX() == 0 && runnerInformation.getRunnerPosition().getY() == 0){
+            if(runnerInformation.getCorrectedRunnerPosition().getX() == 0 && runnerInformation.getRunnerPosition().getY() == 0){
                 Log.d("Benni", "SingleFrame: cropFrame(): No runner position available");
                 return ("No runner position available, frame can't be cropped.");
             }
@@ -73,8 +77,7 @@ public class SingleFrame {
                 Log.d("Benni", "SingleFrame: cropFrame(): Frame size is 0");
                 return ("No frame size available, frame can't be cropped.");
             }
-
-            int xStartPos = runnerInformation.getRunnerPosition().getX() - (width/2);
+            int xStartPos = runnerInformation.getCorrectedRunnerPosition().getX() - (width/2);
             int yStartPos = yPosition - (height/2);
             int xShift = 0;
             int yShift = 0;
