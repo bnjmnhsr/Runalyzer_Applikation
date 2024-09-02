@@ -76,8 +76,6 @@ public class VideoSequence {
 
         Mat previousFrame = null;
 
-        boolean onceHasRunner = false;
-        int framesWithoutRunner = 0;
         while (videoCapture.read(frame)) {
             // Save the current frame as a Mat object in the list
             Mat currentFrame = new Mat();
