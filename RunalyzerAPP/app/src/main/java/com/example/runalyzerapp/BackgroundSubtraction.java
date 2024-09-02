@@ -71,7 +71,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         return runnerInformation;
     }
 
-    public Mat subtract(Mat background, Mat img) {
+    private Mat subtract(Mat background, Mat img) {
         Mat emptyMat = new Mat();
         if(background.empty() || img.empty()){
             return emptyMat;
