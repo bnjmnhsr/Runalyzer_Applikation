@@ -24,13 +24,17 @@ public class VideoSequence {
     private int relativeCreationTime;
     private int videoDurationInMillis;
     private List<SingleFrame> selectedSingleFrames = new ArrayList<>();
-    private RunnerDetection runnerDetector = new BackgroundSubtraction();
+    private RunnerDetection runnerDetector;
 
     public VideoSequence(Context context, Uri videoUri, int relativeCreationTime) {
         this.videoUri = videoUri;
         this.videoFilePath = getRealPathFromURI(context, videoUri);
         this.relativeCreationTime = relativeCreationTime;
         this.videoDurationInMillis = getVideoDurationFromURI(context, videoUri);
+    }
+
+    public void setDetectionMethod(RunnerDetection detectionMethod){
+        this.runnerDetector = detectionMethod;
     }
 
     public List<SingleFrame> getSelectedSingleFrames(){
