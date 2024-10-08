@@ -209,7 +209,7 @@ public class Activity_CreateCompilation extends AppCompatActivity {
         private Thread thread;
         private Activity activity;
 
-        WorkerUsingThread(Activity activity) {
+        public WorkerUsingThread(Activity activity) {
             this.activity = activity;
         }
 
@@ -233,28 +233,28 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 retval = runalyzer.detectRunnerInformation(Activity_CreateCompilation.this);
                 if(!Objects.equals(retval, "success")){
                     print("Error: " + retval);
-                    runalyzerThread.stop();
+                    stop();
                 }
 
                 print("Detecting maximum runner-width and -height...");
                 retval = runalyzer.detectRunnerDimensions();
                 if(!Objects.equals(retval, "success")){
                     print("Error: " + retval);
-                    runalyzerThread.stop();
+                    stop();
                 }
 
                 print("Cropping all single frames...");
                 retval = runalyzer.cropSingleFrames();
                 if(!Objects.equals(retval, "success")){
                     print("Error: " + retval);
-                    runalyzerThread.stop();
+                    stop();
                 }
 
                 print("Creating final video...");
                 retval = runalyzer.createFinalVideo();
                 if(!Objects.equals(retval, "success")){
                     print("Error: " + retval);
-                    runalyzerThread.stop();
+                    stop();
                 }
 
                 print("Finished!");
@@ -263,35 +263,31 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                runalyzerThread.stop();
+
+                String filePath = FilePathHolder.getInstance().getFilePath();
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("filePath", filePath);
+                activity.setResult(Activity.RESULT_OK, resultIntent);
+                activity.finish();
             }
         }
 
-        void start() {
+        public void start() {
             running = true;
             thread = new Thread(this);
             thread.start();
         }
 
-        void stop(){
+        public void stop(){
             if(!running){
                 //TODO
             }else{
                 running = false;
-                while(true){
-                    try {
-                        Log.d("Benni", "Before Join");
-                        thread.join();
-                        Log.d("Benni", "Thread stopped");
-                        break;
-                    } catch (Exception e) {
-                        Log.d("Benni", "Error stopping thread");
-                    }
+                try {
+                    thread.join();
+                } catch (Exception e) {
+                    Log.d("Benni", "Error stopping thread");
                 }
-                String filePath = FilePathHolder.getInstance().getFilePath();
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("filePath", filePath);
-                activity.setResult(Activity.RESULT_OK, resultIntent);
                 activity.finish();
             }
         }
