@@ -62,9 +62,21 @@ public class Activity_RecordVideo extends AppCompatActivity {
 
     private ExecutorService cameraExecutor;
 
-    private Range<Integer> fpsRange = null;
-
     private Camera camera = null;
+
+    private static final String TAG = "CameraXApp";
+    private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
+    private static final String[] REQUIRED_PERMISSIONS =
+            Build.VERSION.SDK_INT <= Build.VERSION_CODES.P ?
+                    new String[]{
+                            Manifest.permission.CAMERA,
+                            Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    } :
+                    new String[]{
+                            Manifest.permission.CAMERA,
+                            Manifest.permission.RECORD_AUDIO
+                    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +101,9 @@ public class Activity_RecordVideo extends AppCompatActivity {
     private void captureVideo() {
         if (videoCapture == null) return;
 
-        if (fpsRange == null) {
+        Range<Integer> fps = getfps();
+
+        if (fps == null) {
             Toast.makeText(getBaseContext(), "30 FPS Setting not available", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -107,23 +121,22 @@ public class Activity_RecordVideo extends AppCompatActivity {
 
         // Set the specifics, I also saw there is this mode:  CONTROL_AF_MODE_CONTINUOUS_VIDEO
         CaptureRequestOptions requestOptions = new CaptureRequestOptions.Builder()
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fps)
                 .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true) // Lock AE
                 .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, true) // Lock AWB
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_EDOF)
                 .build();
 
         CaptureRequestOptions requestOptions2 = new CaptureRequestOptions.Builder()
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fps)
                 .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, false) // Lock AE
                 .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, false) // Lock AWB
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                 .build();
 
         camera2Control.setCaptureRequestOptions(requestOptions);
 
+        //new recording session
         String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis());
         ContentValues contentValues = new ContentValues();
@@ -193,35 +206,54 @@ public class Activity_RecordVideo extends AppCompatActivity {
                     // Select back camera as a default
                     CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
-                    // Unbind use cases before rebinding
-                    cameraProvider.unbindAll();
-
-                    // Bind use cases to camera
-                    camera = cameraProvider.bindToLifecycle(
-                            Activity_RecordVideo.this, cameraSelector, preview, videoCapture);
-
-                    Camera2CameraInfo camera2Info = Camera2CameraInfo.from(camera.getCameraInfo());
-
-                    // Get supported frame rate ranges
-                    Range<Integer>[] supportedFpsRanges = camera2Info.getCameraCharacteristic(
-                            CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-
-                    //Log Range
-                    for (Range<Integer> range : supportedFpsRanges) {
-                        Log.d("Benni", "Supported FPS range: " + range);
+                    try{
+                        // Unbind use cases before rebinding
+                        cameraProvider.unbindAll();
+                        // Bind use cases to camera
+                        camera = cameraProvider.bindToLifecycle(
+                                Activity_RecordVideo.this, cameraSelector, preview, videoCapture);
+                    } catch (Exception exc) {
+                        Log.e(TAG, "Use case binding failed", exc);
                     }
 
-                    for (Range<Integer> range : supportedFpsRanges) {
-                        if (range.contains(30)) {
-                            fpsRange = range;
-                            break;
-                        }
-                    }
+                    Camera2CameraControl camera2Control = Camera2CameraControl.from(camera.getCameraControl());
+
+                    CaptureRequestOptions requestOptions3 = new CaptureRequestOptions.Builder()
+                            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, false) // Lock AE
+                            .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, false) // Lock AWB
+                            .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                            .build();
+
+                    camera2Control.setCaptureRequestOptions(requestOptions3);
                 } catch (Exception exc) {
                     Log.e(TAG, "Use case binding failed", exc);
                 }
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    @OptIn(markerClass = ExperimentalCamera2Interop.class)
+    private Range<Integer> getfps() {
+        Camera2CameraInfo camera2Info = Camera2CameraInfo.from(camera.getCameraInfo());
+
+        // Get supported frame rate ranges
+        Range<Integer>[] supportedFpsRanges = camera2Info.getCameraCharacteristic(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+
+        //Log Range
+        for (Range<Integer> range : supportedFpsRanges) {
+            Log.d("Benni", "Supported FPS range: " + range);
+        }
+
+        Range<Integer> fpsRange = null;
+
+        for (Range<Integer> range : supportedFpsRanges) {
+            if (range.contains(30)) {
+                fpsRange = range;
+                break;
+            }
+        }
+        return fpsRange;
     }
 
 
@@ -249,33 +281,17 @@ public class Activity_RecordVideo extends AppCompatActivity {
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
                     permissions -> {
-        boolean permissionGranted = true;
-        for (Map.Entry<String, Boolean> entry : permissions.entrySet()) {
-        if (Arrays.asList(REQUIRED_PERMISSIONS).contains(entry.getKey()) && !entry.getValue()) {
-            permissionGranted = false;
-            break;
-        }
-    }
-        if (!permissionGranted) {
-            Toast.makeText(getBaseContext(),
-                    "Permission request denied",
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            startCamera();
-        }
-    });
-
-    private static final String TAG = "CameraXApp";
-    private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
-    private static final String[] REQUIRED_PERMISSIONS =
-    Build.VERSION.SDK_INT <= Build.VERSION_CODES.P ?
-    new String[]{
-        Manifest.permission.CAMERA,
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    } :
-    new String[]{
-        Manifest.permission.CAMERA,
-        Manifest.permission.RECORD_AUDIO
-    };
+                        boolean permissionGranted = true;
+                        for (Map.Entry<String, Boolean> entry : permissions.entrySet()) {
+                            if (Arrays.asList(REQUIRED_PERMISSIONS).contains(entry.getKey()) && !entry.getValue()) {
+                            permissionGranted = false;
+                            break;
+                        }
+                        }
+                        if (!permissionGranted) {
+                            Toast.makeText(getBaseContext(), "Permission request denied", Toast.LENGTH_SHORT).show();
+                        } else {
+                        startCamera();
+                        }
+            });
 }
