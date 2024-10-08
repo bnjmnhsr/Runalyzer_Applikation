@@ -20,7 +20,6 @@ public class SingleFrame {
         this.previousFrame = previousFrame;
         this.timecode = timecode;
         hasRunner = false;
-        runnerInformation = new RunnerInformation();
     }
 
     public Mat getFrame(){
@@ -41,10 +40,6 @@ public class SingleFrame {
 
     public void setHasRunner(boolean hasRunner){
         this.hasRunner = hasRunner;
-        if(!hasRunner){
-            runnerInformation = new RunnerInformation();
-            runnerInformation.setEmptyRunnerInformation();
-        }
     }
 
     public RunnerInformation getRunnerInformation(){

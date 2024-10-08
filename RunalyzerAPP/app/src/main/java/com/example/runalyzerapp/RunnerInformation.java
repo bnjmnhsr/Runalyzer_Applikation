@@ -36,12 +36,6 @@ public class RunnerInformation {
         return runnerHeight;
     }
 
-    public void setEmptyRunnerInformation(){
-        runnerPosition = new Vector();
-        runnerWidth = 0;
-        runnerHeight = 0;
-    }
-
     public void correctRunnerPosition(Vector runnerPosition){
         correctedRunnerPosition = runnerPosition;
     }
