@@ -192,42 +192,4 @@ public class Runalyzer {
 
         return "success";
     }
-
-
-    //TODO: This only works because there are only two videos in the camera folder, so it just finds both of them
-    //TODO: For real situation we need to do some adjustments
-    public List<Uri> getVideoUris(Context context) {
-        List<Uri> videoUris = new ArrayList<>();
-        String[] projection = {
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.RELATIVE_PATH};
-        String selection = MediaStore.Video.Media.RELATIVE_PATH + "=?";
-        String[] selectionArgs = new String[]{ "Video_Files" }; // Replace with your folder
-
-
-        try (Cursor cursor = context.getContentResolver().query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                null
-        )) {
-            if (cursor != null) {
-                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-                int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-                int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RELATIVE_PATH);
-
-                while (cursor.moveToNext()) {
-                    long id = cursor.getLong(idColumn);
-                    String name = cursor.getString(nameColumn);
-                    String relativePath = cursor.getString(pathColumn);
-                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
-                    videoUris.add(contentUri);
-                    Log.d("VideoQuery", "Video found: " + name + " in path: " + relativePath + " with URI: " + contentUri.toString());
-                }
-            }
-        }
-        return videoUris;
-    }
 }

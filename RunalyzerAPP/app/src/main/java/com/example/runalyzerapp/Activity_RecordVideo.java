@@ -99,6 +99,8 @@ public class Activity_RecordVideo extends AppCompatActivity {
     // Implements VideoCapture use case, including start and stop capturing.
     @OptIn(markerClass = ExperimentalCamera2Interop.class)
     private void captureVideo() {
+        String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                .format(System.currentTimeMillis());
         if (videoCapture == null) return;
 
         Range<Integer> fps = getfps();
@@ -137,8 +139,6 @@ public class Activity_RecordVideo extends AppCompatActivity {
         camera2Control.setCaptureRequestOptions(requestOptions);
 
         //new recording session
-        String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                .format(System.currentTimeMillis());
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, name + ".mp4");
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
