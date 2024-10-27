@@ -97,11 +97,11 @@ public class VideoSequence {
             int x = 1000;
             int y = 400;
             switch ((int)timecode) {
-//                case 61586387:
-//                case 61591616:
-//                    Log.d("Benni", "Detected Frame");
-//                    currentFrame.put(x, y, new double[]{255, 255, 255});
-//                    break;
+                case 61586387:
+                case 61591616:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame.put(x, y, new double[]{255, 255, 255});
+                    break;
                 case 61586687:
                 case 61591949:
                     Log.d("Benni", "Detected Frame");
