@@ -10,17 +10,28 @@ import android.util.Log;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 
 public class BackgroundSubtraction implements RunnerDetection {
+    private static final List<Integer> timecodes = Arrays.asList(
+            61586387, 61591616, 61586687, 61591949, 61587087, 61592282,
+            61587520, 61592649, 61587854, 61592982, 61588187, 61593316,
+            61588520, 61593649, 61588854, 61593982, 61589187, 61594316,
+            61589520, 61594649, 61589854, 61594982, 61590220, 61595316,
+            61590554, 61595682, 61590920, 61595916, 61591320, 61596149
+    );
     @Override
-    public RunnerInformation detectRunnerInformation(SingleFrame singleFrame) {
+    public RunnerInformation detectRunnerInformation(SingleFrame singleFrame, Context context) {
         RunnerInformation runnerInformation;
 
         if(singleFrame.getPreviousFrame() == null){
@@ -52,6 +63,13 @@ public class BackgroundSubtraction implements RunnerDetection {
             int centerY = (int) (moments.get_m01() / moments.get_m00());
 
             Rect boundingRect = Imgproc.boundingRect(differenceImg);
+            if (timecodes.contains((int)singleFrame.getTimecode())) {
+                String filename = Integer.toString((int)singleFrame.getTimecode());
+                Imgproc.cvtColor(differenceImg, differenceImg, Imgproc.COLOR_GRAY2RGB);
+                Imgproc.rectangle(differenceImg, boundingRect, new Scalar(0, 255, 0));
+                Imgproc.drawMarker(differenceImg, new Point(centerX, centerY), new Scalar(255, 0, 0), Imgproc.MARKER_CROSS, Imgproc.LINE_8, 1);
+                saveMatToGallery(context, differenceImg, filename);
+            }
 //            String filename = Integer.toString((int)singleFrame.getTimecode());
 //            Imgproc.cvtColor(differenceImg, differenceImg, Imgproc.COLOR_GRAY2RGB);
 //            Imgproc.rectangle(differenceImg, boundingRect, new Scalar(0, 255, 0));

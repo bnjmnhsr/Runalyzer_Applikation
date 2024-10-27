@@ -2,17 +2,22 @@ package com.example.runalyzerapp;
 
 import static org.opencv.videoio.Videoio.CAP_PROP_FPS;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,10 +92,91 @@ public class VideoSequence {
             frame.copyTo(currentFrame); //TODO: maybe remove
             int newMatWidth = (int)(Math.sqrt(reductionFactor) * currentFrame.width());
             int newMatHeight = (int)(newMatWidth * ((double)currentFrame.height()/(double)currentFrame.width()));
+            //würde einfach mehrere timecodes einfügen mit unterschiedlich großen Kreisen, dann kann man in einem Testing alles für das Video Testen
+            //position at x=1000 y=400
+            int x = 1000;
+            int y = 400;
+            switch ((int)timecode) {
+//                case 61586387:
+//                case 61591616:
+//                    Log.d("Benni", "Detected Frame");
+//                    currentFrame.put(x, y, new double[]{255, 255, 255});
+//                    break;
+                case 61586687:
+                case 61591949:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 2, context, (int)timecode);
+                    break;
+                case 61587087:
+                case 61592282:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 3, context, (int)timecode);
+                    break;
+                case 61587520:
+                case 61592649:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 4, context, (int)timecode);
+                    break;
+                case 61587854:
+                case 61592982:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 5, context, (int)timecode);
+                    break;
+                case 61588187:
+                case 61593316:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 6, context, (int)timecode);
+                    break;
+                case 61588520:
+                case 61593649:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 7, context, (int)timecode);
+                    break;
+                case 61588854:
+                case 61593982:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 8, context, (int)timecode);
+                    break;
+                case 61589187:
+                case 61594316:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 9, context, (int)timecode);
+                    break;
+                case 61589520:
+                case 61594649:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 10, context, (int)timecode);
+                    break;
+                case 61589854:
+                case 61594982:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 11, context, (int)timecode);
+                    break;
+                case 61590220:
+                case 61595316:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 12, context, (int)timecode);
+                    break;
+                case 61590554:
+                case 61595682:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 13, context, (int)timecode);
+                    break;
+                case 61590920:
+                case 61595916:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 14, context, (int)timecode);
+                    break;
+                case 61591320:
+                case 61596149:
+                    Log.d("Benni", "Detected Frame");
+                    currentFrame = addCircleToMat(currentFrame, x, y, 15, context, (int)timecode);
+                    break;
+            }
             Imgproc.resize(currentFrame, currentFrame, new Size(newMatWidth,newMatHeight));
 
             SingleFrame singleFrame = new SingleFrame(currentFrame, previousFrame, timecode);
-            singleFrame.setRunnerInformation(runnerDetector.detectRunnerInformation(singleFrame));
+            singleFrame.setRunnerInformation(runnerDetector.detectRunnerInformation(singleFrame, context));
 
             if(singleFrame.hasRunner()){
                 selectedSingleFrames.add(singleFrame);
@@ -112,6 +198,12 @@ public class VideoSequence {
         videoCapture.release();
 
         return ("success");
+    }
+
+    private Mat addCircleToMat(Mat mat, int x, int y, int radius, Context context, int timecode){
+        Imgproc.circle(mat, new org.opencv.core.Point(x,y), radius, new org.opencv.core.Scalar(255,255,255), -1);
+        saveMatToGallery(context, mat, Integer.toString(timecode) + "_with_noise.jpg");
+        return mat;
     }
 
     public int getMaxRunnerWidth(){
@@ -351,6 +443,34 @@ public class VideoSequence {
         double IQR = Q3 - Q1;
 
         return Q3 + 1.5 * IQR;
+    }
+
+    public void saveMatToGallery(Context context, Mat mat, String filename) {
+        Bitmap img = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, img);
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+
+        Uri externalContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri imageUri = context.getContentResolver().insert(externalContentUri, values);
+
+        try {
+            if (imageUri != null) {
+                OutputStream outputStream = context.getContentResolver().openOutputStream(imageUri);
+                if (outputStream != null) {
+                    img.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    outputStream.close();
+                } else {
+                    Log.e("Benni", "OutputStream is null.");
+                }
+            } else {
+                Log.e("Benni", "ImageUri is null.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("Benni", Log.getStackTraceString(e));
+        }
     }
 
     private double calculateLowerBound(int[] data, int percentile){
