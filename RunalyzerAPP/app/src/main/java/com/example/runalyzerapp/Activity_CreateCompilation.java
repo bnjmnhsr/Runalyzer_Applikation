@@ -174,7 +174,6 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                         videoPickerUris = uris;
                         inputVideoUris = new ArrayList<>(Collections.nCopies(videoPickerUris.size(), null));
 
-                        //TODO: get millisCreationTime in another way
                         millisCreationTime = new int[uris.size()];
                         video_pos = new int[uris.size()];
 
@@ -195,7 +194,7 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 .setMediaType(ActivityResultContracts.PickVisualMedia.VideoOnly.INSTANCE)
                 .build());
     }
-    //on resumne
+
     @Override
     protected void onResume() {
         super.onResume();
