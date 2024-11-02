@@ -1,37 +1,17 @@
 package com.example.runalyzerapp;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.util.Log;
-
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.List;
-
 public class BackgroundSubtraction implements RunnerDetection {
-    private static final List<Integer> timecodes = Arrays.asList(
-            61586387, 61591616, 61586687, 61591949, 61587087, 61592282,
-            61587520, 61592649, 61587854, 61592982, 61588187, 61593316,
-            61588520, 61593649, 61588854, 61593982, 61589187, 61594316,
-            61589520, 61594649, 61589854, 61594982, 61590220, 61595316,
-            61590554, 61595682, 61590920, 61595916, 61591320, 61596149
-    );
+
     @Override
-    public RunnerInformation detectRunnerInformation(SingleFrame singleFrame, Context context) {
+    public RunnerInformation detectRunnerInformation(SingleFrame singleFrame) {
         RunnerInformation runnerInformation;
 
         if(singleFrame.getPreviousFrame() == null){
@@ -56,28 +36,14 @@ public class BackgroundSubtraction implements RunnerDetection {
             Log.e("Benni", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
             return null;
         }
-        //TODO: check what's a correct value to identify a runner (depends also on camera-distance)
+
         if(moments.get_m00() > 0){
             singleFrame.setHasRunner(true);
             int centerX = (int) (moments.get_m10() / moments.get_m00());
             int centerY = (int) (moments.get_m01() / moments.get_m00());
 
             Rect boundingRect = Imgproc.boundingRect(differenceImg);
-            if (timecodes.contains((int)singleFrame.getTimecode())) {
-                String filename = Integer.toString((int)singleFrame.getTimecode());
-                Imgproc.cvtColor(differenceImg, differenceImg, Imgproc.COLOR_GRAY2RGB);
-                Imgproc.rectangle(differenceImg, boundingRect, new Scalar(0, 255, 0));
-                Imgproc.drawMarker(differenceImg, new Point(centerX, centerY), new Scalar(255, 0, 0), Imgproc.MARKER_CROSS, Imgproc.LINE_8, 1);
-                saveMatToGallery(context, differenceImg, filename);
-            }
-//            String filename = Integer.toString((int)singleFrame.getTimecode());
-//            Imgproc.cvtColor(differenceImg, differenceImg, Imgproc.COLOR_GRAY2RGB);
-//            Imgproc.rectangle(differenceImg, boundingRect, new Scalar(0, 255, 0));
-//            Imgproc.drawMarker(differenceImg, new Point(centerX, centerY), new Scalar(255, 0, 0), Imgproc.MARKER_CROSS, Imgproc.LINE_8, 1);
-//            saveMatToGallery(context, differenceImg, filename);
-
             differenceImg.release();
-
             runnerInformation = new RunnerInformation(new Vector(centerX, centerY), boundingRect.width, boundingRect.height);
         }
         else{
@@ -139,7 +105,6 @@ public class BackgroundSubtraction implements RunnerDetection {
         }
 
         //remove noise
-        //TODO: make kernel size dependent of Mat size
         try {
             Imgproc.erode(resultImg, resultImg, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3, 3)));
         } catch (Exception e) {
@@ -149,35 +114,5 @@ public class BackgroundSubtraction implements RunnerDetection {
 
         emptyMat.release();
         return resultImg;
-    }
-
-    //TODO: only for debugging, remove
-    //Example-invoke: saveMatToGallery(context, differenceImg, Integer.toString(newTimecode));
-    public void saveMatToGallery(Context context, Mat mat, String filename) {
-        Bitmap img = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat, img);
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-
-        Uri externalContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        Uri imageUri = context.getContentResolver().insert(externalContentUri, values);
-
-        try {
-            if (imageUri != null) {
-                OutputStream outputStream = context.getContentResolver().openOutputStream(imageUri);
-                if (outputStream != null) {
-                    img.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-                    outputStream.close();
-                } else {
-                    Log.e("Benni", "OutputStream is null.");
-                }
-            } else {
-                Log.e("Benni", "ImageUri is null.");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e("Benni", Log.getStackTraceString(e));
-        }
     }
 }
