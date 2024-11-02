@@ -1,9 +1,6 @@
 package com.example.runalyzerapp;
 
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
-import android.provider.MediaStore;
 import android.net.Uri;
 import android.util.Log;
 
@@ -141,7 +138,7 @@ public class Runalyzer {
             Log.d("Benni", "Runalyzer: cropSingleFrames(): max runner width or height is 0");
             return ("Maximum runner width or height is 0");
         }
-        // Ensure the cropping dimensions are even
+
         int croppingWidth = maxRunnerWidth*2;
         int croppingHeight = maxRunnerHeight*2;
         if (croppingWidth < 100) {
