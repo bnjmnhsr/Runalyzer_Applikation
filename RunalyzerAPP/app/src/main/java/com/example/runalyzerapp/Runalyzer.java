@@ -47,7 +47,7 @@ public class Runalyzer {
         }
         for(VideoSequence vidSeq : videoSequences){
             vidSeq.setDetectionMethod(new BackgroundSubtraction());
-            retval = vidSeq.separateToFrames(context, totalMillisAllVideos);
+            retval = vidSeq.separateToFrames(totalMillisAllVideos);
             if(!Objects.equals(retval, "success")){
                 return retval;
             }
