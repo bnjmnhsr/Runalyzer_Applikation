@@ -21,7 +21,7 @@ public class FinalVideo {
     private int height;
     private List<Mat> finalFrames;
 
-    public FinalVideo (int width, int height){
+    public FinalVideo(int width, int height) {
         this.width = width;
         this.height = height;
     }
@@ -34,48 +34,44 @@ public class FinalVideo {
         return height;
     }
 
-    public String setFinalFrames(List<VideoSequence> videoSequences){
+    public String setFinalFrames(List<VideoSequence> videoSequences) {
         finalFrames = new ArrayList<>();
-        if(videoSequences.isEmpty()){
+        if (videoSequences.isEmpty()) {
             Log.d("Benni", "FinalVideo: setFinalFrames(): No video sequences");
             return ("No video sequences to set final frames.");
         }
         double relativeRunnerPosition;
         double switchingTimecode = 0;
-        for(VideoSequence vs : videoSequences){
-            if(vs.getSelectedSingleFrames().isEmpty()){
+        for (VideoSequence vs : videoSequences) {
+            if (vs.getSelectedSingleFrames().isEmpty()) {
                 Log.d("Benni", "FinalVideo: setFinalFrames(): No single frames in video sequence");
                 return ("No single frames in video sequence, final frames can't be set.");
             }
-            for(SingleFrame fr : vs.getSelectedSingleFrames()){
-                if(fr.hasRunner() && fr.getTimecode() >= switchingTimecode){
-                    if(fr.getRunnerInformation().getRunnerWidth() == 0){
+            for (SingleFrame fr : vs.getSelectedSingleFrames()) {
+                if (fr.hasRunner() && fr.getTimecode() > switchingTimecode) {
+                    if (fr.getRunnerInformation().getRunnerWidth() == 0) {
                         Log.d("Benni", "FinalVideo: setFinalFrames(): Frame width is 0");
                         return ("Frame width is 0, final frame can't be selected.");
                     }
                     relativeRunnerPosition = (double) fr.getRunnerInformation().getRunnerPosition().getX() / fr.getFrame().width();
-                    if(vs != videoSequences.get(videoSequences.size() - 1) && relativeRunnerPosition >= 0.875){
+                    if (vs != videoSequences.get(videoSequences.size() - 1) && relativeRunnerPosition >= 0.875) {
                         switchingTimecode = fr.getTimecode();
                         break;
-                    }
-                    else{
-                        if(fr.getCroppedFrame() != null){
+                    } else {
+                        if (fr.getCroppedFrame() != null) {
                             finalFrames.add(fr.getCroppedFrame());
                         }
                     }
                 }
-                //TODO: added if we just want to create a video without cropping or selection
-                //finalFrames.add(fr.getFrame());
-                //Log.d("Benni", "Frame added to finalFrames");
             }
         }
         return "success";
     }
 
-    public String create(){
-        if(finalFrames.isEmpty()){
-            Log.d("Benni","FinalVideo: create(): frames empty, video can't be created");
-            return("No frames to create final video.");
+    public String create() {
+        if (finalFrames.isEmpty()) {
+            Log.d("Benni", "FinalVideo: create(): frames empty, video can't be created");
+            return ("No frames to create final video.");
         }
         FileChannelWrapper out = null;
         try {
