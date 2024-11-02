@@ -23,7 +23,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         //create binary difference image
         Mat differenceImg = subtract(singleFrame.getPreviousFrame(), singleFrame.getFrame());
         if(differenceImg.empty()){
-            Log.d("Benni","BackgroundSubtraction: detectRunnerInformation(): Background subtraction failed");
+            Log.d("RunalyzerDEBUG","BackgroundSubtraction: detectRunnerInformation(): Background subtraction failed");
             differenceImg.release();
             return null;
         }
@@ -33,7 +33,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         try {
             moments = Imgproc.moments(differenceImg);
         } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: detectRunnerInformation(): " + Log.getStackTraceString(e));
             return null;
         }
 
@@ -72,7 +72,7 @@ public class BackgroundSubtraction implements RunnerDetection {
             resultImg1.release();
             resultImg2.release();
         } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 
@@ -82,7 +82,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         try {
             Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
         } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 
@@ -90,7 +90,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         try {
             Imgproc.cvtColor(resultImg, resultImg, Imgproc.COLOR_RGB2GRAY);
         }catch(Exception e){
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 
@@ -100,7 +100,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         try {
             Imgproc.threshold(resultImg, resultImg, thresholdValue, 255, thresholdType);
         } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 
@@ -108,7 +108,7 @@ public class BackgroundSubtraction implements RunnerDetection {
         try {
             Imgproc.erode(resultImg, resultImg, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3, 3)));
         } catch (Exception e) {
-            Log.e("Benni", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "BackgroundSubtraction: subtract(): " + Log.getStackTraceString(e));
             return emptyMat;
         }
 

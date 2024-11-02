@@ -47,10 +47,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        if (OpenCVLoader.initLocal()) {
-            Log.d("Benni", "OpenCV loaded successfully");
-        } else {
-            Log.d("Benni", "OpenCV initialization failed!");
+        if (!OpenCVLoader.initLocal()) {
             (Toast.makeText(this, "OpenCV initialization failed!", Toast.LENGTH_LONG)).show();
             return;
         }
@@ -146,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_CREATE_COMPILATION) {
             if(resultCode == Activity.RESULT_OK){
                 String filePath = data.getStringExtra("filePath");
-                Log.d("Benni", "File path: " + filePath);
 
                 String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath();
                 File directory = new File(directoryPath);

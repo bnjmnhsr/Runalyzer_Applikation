@@ -60,16 +60,16 @@ public class SingleFrame {
 
     public String cropFrame(int width, int height, int yPosition){
         if(width == 0 || height == 0 || yPosition == 0){
-            Log.d("Benni", "SingleFrame: cropFrame(): Width, Height or Y-Position is 0");
+            Log.d("RunalyzerDEBUG", "SingleFrame: cropFrame(): Width, Height or Y-Position is 0");
             return ("Width, Height or Y-Position is 0, frame can't be cropped.");
         }
         if(hasRunner){
             if(runnerInformation.getCorrectedRunnerPosition().getX() == 0 && runnerInformation.getRunnerPosition().getY() == 0){
-                Log.d("Benni", "SingleFrame: cropFrame(): No runner position available");
+                Log.d("RunalyzerDEBUG", "SingleFrame: cropFrame(): No runner position available");
                 return ("No runner position available, frame can't be cropped.");
             }
             if(frame.width() == 0|| frame.height() == 0){
-                Log.d("Benni", "SingleFrame: cropFrame(): Frame size is 0");
+                Log.d("RunalyzerDEBUG", "SingleFrame: cropFrame(): Frame size is 0");
                 return ("No frame size available, frame can't be cropped.");
             }
             int xStartPos = runnerInformation.getCorrectedRunnerPosition().getX() - (width/2);

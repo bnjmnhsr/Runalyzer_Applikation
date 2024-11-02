@@ -45,19 +45,19 @@ public class VideoSequence {
 
     public String separateToFrames(int totalMillisAllVideos){
         if(Objects.equals(videoFilePath, "")){
-            Log.d("Benni","VideoSequence: separateToFrames(): Empty videoFilePath");
+            Log.d("RunalyzerDEBUG","VideoSequence: separateToFrames(): Empty videoFilePath");
             return("Empty video file path. Probably no Uri detected.");
         }
         VideoCapture videoCapture = null;
         try {
             videoCapture = new VideoCapture(videoFilePath);
         } catch (Exception e) {
-            Log.e("Benni", Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", Log.getStackTraceString(e));
             return Log.getStackTraceString(e);
         }
 
         if (!videoCapture.isOpened()) {
-            Log.d("Benni", "VideoSequence: separateToFrames(): Failed to open video file: " + videoFilePath);
+            Log.d("RunalyzerDEBUG", "VideoSequence: separateToFrames(): Failed to open video file: " + videoFilePath);
             return ("Failed to open video file: " + videoFilePath);
         }
 
@@ -65,7 +65,7 @@ public class VideoSequence {
         double timecode = relativeCreationTime;
         double fps = videoCapture.get(CAP_PROP_FPS);
         if(fps == 0){
-            Log.d("Benni","VideoSequence: separateToFrames(): fps can't be read from input video");
+            Log.d("RunalyzerDEBUG","VideoSequence: separateToFrames(): fps can't be read from input video");
             return("fps can't be read from input video");
         }
         double millisBetweenFrames = (1000.0/fps);
@@ -98,7 +98,7 @@ public class VideoSequence {
         }
 
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni","VideoSequence: separateToFrames(): frameList still empty, videoCapture failed");
+            Log.d("RunalyzerDEBUG","VideoSequence: separateToFrames(): frameList still empty, videoCapture failed");
             return("No single frame could be captured from input Video.");
         }
 
@@ -114,7 +114,7 @@ public class VideoSequence {
     public int getMaxRunnerWidth(){
         int maxRunnerWidth = 0;
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: getMaxRunnerWidth(): No single frames");
+            Log.d("RunalyzerDEBUG", "VideoSequence: getMaxRunnerWidth(): No single frames");
             return -1;
         }
         for(SingleFrame frame : selectedSingleFrames){
@@ -128,7 +128,7 @@ public class VideoSequence {
     public int getMaxRunnerHeight(){
         int maxRunnerHeight = 0;
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: getMaxRunnerHeight(): No single frames");
+            Log.d("RunalyzerDEBUG", "VideoSequence: getMaxRunnerHeight(): No single frames");
             return -1;
         }
         for(SingleFrame frame : selectedSingleFrames){
@@ -141,21 +141,21 @@ public class VideoSequence {
 
     public int getLowestYPosition(){
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: getMiddleYPosition(): No single frames.");
+            Log.d("RunalyzerDEBUG", "VideoSequence: getMiddleYPosition(): No single frames.");
             return -1;
         }
 
         int actYPos;
         int lowestYPosition = selectedSingleFrames.get(0).getFrame().height();
         if(lowestYPosition == 0){
-            Log.d("Benni", "VideoSequence: getMiddleYPosition(): Frame-Height of 0 detected, error.");
+            Log.d("RunalyzerDEBUG", "VideoSequence: getMiddleYPosition(): Frame-Height of 0 detected, error.");
             return -1;
         }
 
         for(SingleFrame frame : selectedSingleFrames){
             actYPos = frame.getRunnerInformation().getRunnerPosition().getY();
             if(actYPos == 0){
-                Log.d("Benni", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
+                Log.d("RunalyzerDEBUG", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
                 return -1;
             }
 
@@ -169,7 +169,7 @@ public class VideoSequence {
 
     public int getHighestYPosition(){
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: getMiddleYPosition(): No single frames.");
+            Log.d("RunalyzerDEBUG", "VideoSequence: getMiddleYPosition(): No single frames.");
             return -1;
         }
 
@@ -179,7 +179,7 @@ public class VideoSequence {
         for(SingleFrame frame : selectedSingleFrames){
             actYPos = frame.getRunnerInformation().getRunnerPosition().getY();
             if(actYPos == 0){
-                Log.d("Benni", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
+                Log.d("RunalyzerDEBUG", "VideoSequence: getMiddleYPosition(): SingleFrame with Runner-Y-Position = 0 detected.");
                 return -1;
             }
             if(actYPos > highestYPosition){
@@ -192,7 +192,7 @@ public class VideoSequence {
 
     public String smoothXPos(){
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: smoothXPos(): No single frames");
+            Log.d("RunalyzerDEBUG", "VideoSequence: smoothXPos(): No single frames");
             return ("No single frames, xPos can't be smoothed.");
         }
 
@@ -217,11 +217,11 @@ public class VideoSequence {
     public String cropFrames(int width, int height, int yPosition){
         String retval;
         if(width == 0 || height == 0){
-            Log.d("Benni", "VideoSequence: cropFrames(): Width or Height is 0");
+            Log.d("RunalyzerDEBUG", "VideoSequence: cropFrames(): Width or Height is 0");
             return ("Width or Height is 0, frames can't be cropped.");
         }
         if(selectedSingleFrames.isEmpty()){
-            Log.d("Benni", "VideoSequence: cropFrames(): No single frames");
+            Log.d("RunalyzerDEBUG", "VideoSequence: cropFrames(): No single frames");
             return ("No single frames, frames can't be cropped.");
         }
         for(SingleFrame frame : selectedSingleFrames){
@@ -237,7 +237,7 @@ public class VideoSequence {
 
     public String getRealPathFromURI(Context context, Uri contentUri) {
         if(contentUri == null){
-            Log.d("Benni","VideoSequence: getRealPathFromURI(): contentUri == null");
+            Log.d("RunalyzerDEBUG","VideoSequence: getRealPathFromURI(): contentUri == null");
             return ("");
         }
         String[] proj = { MediaStore.Images.Media.DATA };
@@ -255,7 +255,7 @@ public class VideoSequence {
 
     public int getVideoDurationFromURI(Context context, Uri contentUri) {
         if(contentUri == null){
-            Log.d("Benni","VideoSequence: getVideoDurationFromURI(): contentUri == null");
+            Log.d("RunalyzerDEBUG","VideoSequence: getVideoDurationFromURI(): contentUri == null");
             return -1;
         }
         String[] proj = { MediaStore.Video.Media.DURATION };
@@ -293,25 +293,21 @@ public class VideoSequence {
             if(fr.getRunnerInformation().getRunnerWidth() > upperBound_runnerWidths){
                 if(!framesToRemove.contains(fr)){
                     framesToRemove.add(fr);
-                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because width= " + fr.getRunnerInformation().getRunnerWidth() + " > upperBound= " + upperBound_runnerWidths);
                 }
             }
             if(fr.getRunnerInformation().getRunnerHeight() > upperBound_runnerHeights){
                 if(!framesToRemove.contains(fr)){
                     framesToRemove.add(fr);
-                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because height= " + fr.getRunnerInformation().getRunnerHeight() + " > upperBound= " + upperBound_runnerHeights);
                 }
             }
             if(fr.getRunnerInformation().getRunnerPosition().getY() > upperBound_centerY){
                 if(!framesToRemove.contains(fr)){
                     framesToRemove.add(fr);
-                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because centerY= " + fr.getRunnerInformation().getRunnerPosition().getY() + " > upperBound= " + upperBound_centerY);
                 }
             }
             if(fr.getRunnerInformation().getRunnerPosition().getY() < lowerBound_centerY){
                 if(!framesToRemove.contains(fr)){
                     framesToRemove.add(fr);
-                    Log.d("Benni", "removed " + (int)fr.getTimecode() + " because centerY= " + fr.getRunnerInformation().getRunnerPosition().getY() + " < lowerBound= " + lowerBound_centerY);
                 }
             }
         }

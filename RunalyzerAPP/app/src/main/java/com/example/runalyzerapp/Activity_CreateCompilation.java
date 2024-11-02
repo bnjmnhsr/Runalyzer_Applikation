@@ -157,7 +157,6 @@ public class Activity_CreateCompilation extends AppCompatActivity {
         button3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("Benni", "Starting runalyzerThread");
                 statusText.setText("Starting Runalyzer...");
                 runalyzerThread = new WorkerUsingThread(Activity_CreateCompilation.this);
                 runalyzerThread.start();
@@ -226,8 +225,6 @@ public class Activity_CreateCompilation extends AppCompatActivity {
             String retval;
             Runalyzer runalyzer = new Runalyzer(inputVideoUris, millisCreationTime);
             if(running){
-                Log.d("Benni", "millisCreationTime[0] = " + millisCreationTime[0]);
-                Log.d("Benni", "millisCreationTime[1] = " + millisCreationTime[1]);
                 print("Detecting runner-information...");
                 retval = runalyzer.detectRunnerInformation(Activity_CreateCompilation.this);
                 if(!Objects.equals(retval, "success")){
@@ -285,7 +282,7 @@ public class Activity_CreateCompilation extends AppCompatActivity {
                 try {
                     thread.join();
                 } catch (Exception e) {
-                    Log.d("Benni", "Error stopping thread");
+                    Log.e("RunalyzerDEBUG", "WorkerUsingThread: stop(): " + Log.getStackTraceString(e));
                 }
                 activity.finish();
             }

@@ -30,16 +30,16 @@ public class Runalyzer {
         int totalMillisAllVideos = 0;
 
         if(inputVideoUris.isEmpty()){
-            Log.d("Benni", "Runalyzer: detectRunnerInformation(): No input videos (Uris size = 0)");
+            Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerInformation(): No input videos (Uris size = 0)");
             return ("No input videos.");
         }
         for (int i = 0; i < inputVideoUris.size(); i++) {
             Uri videoUri = inputVideoUris.get(i);
             if(millisCreationTime == null){
-                Log.d("Benni","Runalyzer: detectRunnerInformation(): millisCreationTime == null");
+                Log.d("RunalyzerDEBUG","Runalyzer: detectRunnerInformation(): millisCreationTime == null");
                 return ("Creation time in milliseconds is a null value array");
             }else if(i > (millisCreationTime.length - 1)){
-                Log.d("Benni","Runalyzer: detectRunnerInformation(): No millisCreationTime for video " + i);
+                Log.d("RunalyzerDEBUG","Runalyzer: detectRunnerInformation(): No millisCreationTime for video " + i);
                 return ("No creation time in milliseconds available for video " + i);
             }
             videoSequences.add(new VideoSequence(context, videoUri, millisCreationTime[i]));
@@ -61,14 +61,14 @@ public class Runalyzer {
 
     public String detectRunnerDimensions(){
         if(videoSequences.isEmpty()){
-            Log.d("Benni", "Runalyzer: detectRunnerDimensions(): No video sequences");
+            Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): No video sequences");
             return ("No video sequences to detect max runner width and height.");
         }
 
         int highestYPosition = 0;
         int lowestYPosition = videoSequences.get(0).getSelectedSingleFrames().get(0).getFrame().height();
         if(lowestYPosition == 0){
-            Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Frame-Height of 0 detected, error.");
+            Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): Frame-Height of 0 detected, error.");
             return ("Frame-Height of 0 detected");
         }
 
@@ -79,7 +79,7 @@ public class Runalyzer {
             if(actMaxRunnerWidth == -1){
                 return ("Detecting max runner width failed. See log for details.");
             }else if(actMaxRunnerWidth == 0){
-                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner width = 0)");
+                Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner width = 0)");
                 return ("Video has no runner (max runner width = 0)");
             }
             if(actMaxRunnerWidth > maxRunnerWidth){
@@ -91,7 +91,7 @@ public class Runalyzer {
             if(actMaxRunnerHeight == -1){
                 return ("Detecting max runner height failed. See log for details.");
             }else if(actMaxRunnerHeight == 0){
-                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner height = 0)");
+                Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): Video has no runner (max runner height = 0)");
                 return ("Video has no runner (max runner height = 0)");
             }
             if(actMaxRunnerHeight > maxRunnerHeight){
@@ -103,7 +103,7 @@ public class Runalyzer {
             if(actLowestYPosition == -1){
                 return ("Detecting max runner width failed. See log for details.");
             }else if(actLowestYPosition == 0){
-                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
+                Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
                 return ("All SingleFrames have Runner-Y-Position = 0");
             }
             if(actLowestYPosition < lowestYPosition){
@@ -115,7 +115,7 @@ public class Runalyzer {
             if(actHighestYPosition == -1){
                 return ("Detecting max runner width failed. See log for details.");
             }else if(actHighestYPosition == 0){
-                Log.d("Benni", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
+                Log.d("RunalyzerDEBUG", "Runalyzer: detectRunnerDimensions(): All SingleFrames have Runner-Y-Position = 0");
                 return ("All SingleFrames have Runner-Y-Position = 0");
             }
             if(actHighestYPosition > highestYPosition){
@@ -125,17 +125,13 @@ public class Runalyzer {
 
         middleYPosition = (highestYPosition + lowestYPosition) / 2;
 
-        Log.d("Benni", "MaxRunnerWidth: " + maxRunnerWidth );
-        Log.d("Benni", "MaxRunnerHeight: " + maxRunnerHeight );
-        Log.d("Benni", "MiddleYPosition: " + middleYPosition );
-
         return "success";
     }
 
     public String cropSingleFrames(){
         String retval = null;
         if(maxRunnerWidth == 0 || maxRunnerHeight == 0){
-            Log.d("Benni", "Runalyzer: cropSingleFrames(): max runner width or height is 0");
+            Log.d("RunalyzerDEBUG", "Runalyzer: cropSingleFrames(): max runner width or height is 0");
             return ("Maximum runner width or height is 0");
         }
 
@@ -150,10 +146,8 @@ public class Runalyzer {
 
         finalVideo = new FinalVideo(croppingWidth, croppingHeight);
 
-        Log.d("Benni", "Cropping Width: " + croppingWidth + ", Cropping Height: " + croppingHeight);
-
         if(videoSequences.isEmpty()){
-            Log.d("Benni", "Runalyzer: cropSingleFrames(): No video sequences");
+            Log.d("RunalyzerDEBUG", "Runalyzer: cropSingleFrames(): No video sequences");
             return ("No video sequences to crop single frames.");
         }
         for(VideoSequence vidSequence : videoSequences){
@@ -167,14 +161,13 @@ public class Runalyzer {
 
     public String createFinalVideo(){
         String retval = null;
-        Log.d("Benni", "Creating Final Video");
         if(finalVideo.getWidth() == 0 || finalVideo.getHeight() == 0){
-            Log.d("Benni", "Runalyzer: createFinalVideo(): cropping width or height is 0");
+            Log.d("RunalyzerDEBUG", "Runalyzer: createFinalVideo(): cropping width or height is 0");
             return ("Cropping width or height is 0, final video can't be created.");
         }
 
         if(videoSequences.isEmpty()){
-            Log.d("Benni", "Runalyzer: createFinalVideo(): No video sequences");
+            Log.d("RunalyzerDEBUG", "Runalyzer: createFinalVideo(): No video sequences");
             return ("No video sequences to create final video.");
         }
         retval = finalVideo.setFinalFrames(videoSequences);

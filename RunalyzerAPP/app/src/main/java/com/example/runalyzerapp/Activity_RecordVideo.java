@@ -242,7 +242,7 @@ public class Activity_RecordVideo extends AppCompatActivity {
 
         //Log Range
         for (Range<Integer> range : supportedFpsRanges) {
-            Log.d("Benni", "Supported FPS range: " + range);
+            Log.d("RunalyzerDEBUG", "Supported FPS range: " + range);
         }
 
         Range<Integer> fpsRange = null;

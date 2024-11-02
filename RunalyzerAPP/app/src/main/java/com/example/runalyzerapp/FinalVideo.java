@@ -37,20 +37,20 @@ public class FinalVideo {
     public String setFinalFrames(List<VideoSequence> videoSequences) {
         finalFrames = new ArrayList<>();
         if (videoSequences.isEmpty()) {
-            Log.d("Benni", "FinalVideo: setFinalFrames(): No video sequences");
+            Log.d("RunalyzerDEBUG", "FinalVideo: setFinalFrames(): No video sequences");
             return ("No video sequences to set final frames.");
         }
         double relativeRunnerPosition;
         double switchingTimecode = 0;
         for (VideoSequence vs : videoSequences) {
             if (vs.getSelectedSingleFrames().isEmpty()) {
-                Log.d("Benni", "FinalVideo: setFinalFrames(): No single frames in video sequence");
+                Log.d("RunalyzerDEBUG", "FinalVideo: setFinalFrames(): No single frames in video sequence");
                 return ("No single frames in video sequence, final frames can't be set.");
             }
             for (SingleFrame fr : vs.getSelectedSingleFrames()) {
                 if (fr.hasRunner() && fr.getTimecode() > switchingTimecode) {
                     if (fr.getRunnerInformation().getRunnerWidth() == 0) {
-                        Log.d("Benni", "FinalVideo: setFinalFrames(): Frame width is 0");
+                        Log.d("RunalyzerDEBUG", "FinalVideo: setFinalFrames(): Frame width is 0");
                         return ("Frame width is 0, final frame can't be selected.");
                     }
                     relativeRunnerPosition = (double) fr.getRunnerInformation().getRunnerPosition().getX() / fr.getFrame().width();
@@ -70,7 +70,7 @@ public class FinalVideo {
 
     public String create() {
         if (finalFrames.isEmpty()) {
-            Log.d("Benni", "FinalVideo: create(): frames empty, video can't be created");
+            Log.d("RunalyzerDEBUG", "FinalVideo: create(): frames empty, video can't be created");
             return ("No frames to create final video.");
         }
         FileChannelWrapper out = null;
@@ -90,12 +90,10 @@ public class FinalVideo {
             }
             // Finalize the encoding, i.e. clear the buffers, write the header, etc.
             encoder.finish();
-            Log.d("Benni", "Video written");
         } catch (IOException e) {
-            Log.e("Benni", "FinalVideo: create(): " + Log.getStackTraceString(e));
+            Log.e("RunalyzerDEBUG", "FinalVideo: create(): " + Log.getStackTraceString(e));
             return ("Create video from frames failed. Details see log.");
         } finally {
-            Log.d("Benni", "Closing File");
             NIOUtils.closeQuietly(out);
         }
         return "success";
