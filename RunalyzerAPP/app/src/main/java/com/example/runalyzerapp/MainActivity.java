@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        //Check if Opencv is loaded correctly, copied from OpenCV documentation
         if (OpenCVLoader.initLocal()) {
             Log.d("Benni", "OpenCV loaded successfully");
         } else {
