@@ -12,7 +12,10 @@ Beim Aufnehmen des Läufers über die "Record Video"-Funktion auf dem Telefon st
 
 Beim Erstellen der Videokompilation denken Sie daran, den Zeitcode einzugeben, der im Namen der Videodatei gespeichert wurde.
 
-Im Repository finden Sie auch eine [Bildschirmaufnahme](path/to/video.mp4), die zeigt, wie die Anwendung verwendet werden sollte.
+Im Repository finden Sie auch zwei Bildschrimaufnahmen, die zeigen, wie die Anwendung verwendet werden sollte.
+- [Video Aufnehmen](Screen_Record_Record_Video.mp4)
+- [Finales Video Erstellen](Screen_Record_Create_Compilation.mp4)
+
 
 Um die Applikation erfolgreich auf einem Android-Gerät zu starten, müssen folgende Anweisungen beachtet werden:
 
